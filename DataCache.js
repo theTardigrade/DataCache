@@ -15,11 +15,11 @@
 
 	function DataCache(size) {
 		var cacheSize = (function() {
-				var r = parseInt(size, 10);
+				var r = (typeof size !== "number") ? parseInt(size, 10) : size;
 				r = M.min(r, M.pow(2, 32) - 1); // maximum array length (4.29bn)
 				return M.max(r, 0); // disregard negatives
 			})(),
-			cache = (isNaN(cacheSize)) ? [] : new Array(cacheSize);
+			cache = (global.isNaN(cacheSize)) ? [] : new Array(cacheSize);
 
 		this.get = function(key, dataOnly) {
 			var index = findIndex(cache, key);
@@ -37,7 +37,7 @@
 				};
 
 			if (index === -1) index = cache.length + 1;
-			return ((cache[index - 1] = key) && (cache[index] = metadata));
+			return (cache[index - 1] = key) && (cache[index] = metadata);
 		};
 
 		this.remove = function(key) {
