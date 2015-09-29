@@ -49,7 +49,7 @@
 		};
 
 		this.clear = function() {
-			return (cache = []) && true;
+			return !!(cache = []);
 		};
 
 		this.getLastUpdated = function(key) {
