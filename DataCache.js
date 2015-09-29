@@ -59,9 +59,9 @@
 		};
 	};
 
-	if (global.module && global.module.exports) {
+	if (global.module && global.module.exports) { // Node.js environment
 		global.module.exports = DataCache;
-	} else {
+	} else { // other environments
 		global.DataCache = DataCache;
 	}
 
