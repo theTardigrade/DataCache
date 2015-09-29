@@ -40,7 +40,7 @@
 			return (cache[index - 1] = key) && (cache[index] = metadata);
 		};
 
-		this.remove = function(key) {
+		this.unset = function(key) {
 			var index = findIndex(cache, key);
 
 			return (index === -1)
