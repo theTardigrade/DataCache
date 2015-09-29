@@ -32,7 +32,7 @@
 				};
 
 			if (index === -1) index = cache.length + 1;
-			return (cache[index] = metadata) && (cache[index - 1] = key);
+			return (cache[index - 1] = key) && (cache[index] = metadata);
 		};
 
 		this.remove = function(key) {
