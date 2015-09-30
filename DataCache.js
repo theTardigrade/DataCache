@@ -2,15 +2,15 @@
 
 	var newDateTest = (typeof D.now === "function"),
 		findIndex = function(cacheArray, key) {
-			for (var i = 0, e = -1; i < cacheArray.length; i += 2) {
+			for (var i = 0, l = cacheArray.length, e = l; i < l; i += 2) {
 				if (i in cacheArray) {
 					if (key === cacheArray[i]) {
 						return i + 1;
 					}
 				} else if (e === -1) {
-					e = i + 1;
+					e = i;
 				}
-			} return e;
+			} return e + 1;
 		},
 		simpleSort = function(cacheArray) {
 			for (var i = 0, j, temp; i < cacheArray.length; i += 2) {
@@ -35,7 +35,7 @@
 		this.get = function(key, dataOnly) {
 			var index = findIndex(cache, key);
 
-			return (index === -1)
+			return (index === cache.length + 1)
 				? undefined
 				: (dataOnly) ? cache[index].data : cache[index];
 		};
@@ -51,7 +51,6 @@
 					lastUpdated: (newDateTest) ? D.now() : new D().getTime()
 				};
 
-			if (index === -1) index = cache.length + 1;
 			cache[index - 1] = key, cache[index] = metadata;
 
 			simpleSort(cache);
@@ -73,7 +72,9 @@
 		this.getLastUpdated = function(key) {
 			var index = findIndex(cache, key);
 
-			return (index === -1) ? undefined : cache[index].lastUpdated;
+			return (index === cache.length + 1)
+				? undefined
+				: cache[index].lastUpdated;
 		};
 	};
 
