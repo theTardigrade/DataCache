@@ -12,12 +12,13 @@
 				}
 			} return e;
 		},
-		simpleArraySort = function(array) {
-			for (var i = 0, j, temp; i < array.length; i += 2) {
-				if (array[i] > array[i + 2]) {
+		simpleSort = function(cacheArray) {
+			for (var i = 0, j, temp; i < cacheArray.length; i += 2) {
+				if (cacheArray[i] > cacheArray[i + 2]) {
 					for (j = i; j < i + 2; j++) {
-						temp = array[j];
-						array[j] = array[j + 2], array[j + 2] = temp;
+						temp = cacheArray[j];
+						cacheArray[j] = cacheArray[j + 2];
+						cacheArray[j + 2] = temp;;
 					} i -= 4;
 				}
 			}
@@ -51,9 +52,9 @@
 				};
 
 			if (index === -1) index = cache.length + 1;
-			(cache[index - 1] = key) && (cache[index] = metadata);
+			cache[index - 1] = key, cache[index] = metadata;
 
-			simpleArraySort(cache);
+			simpleSort(cache);
 			return metadata;
 		};
 
