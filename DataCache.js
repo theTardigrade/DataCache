@@ -51,6 +51,10 @@
 					lastUpdated: (newDateTest) ? D.now() : new D().getTime()
 				};
 
+			metadata.created = (cache[index] && cache[index].created)
+				? cache[index].created
+				: metadata.lastUpdated;
+
 			cache[index - 1] = key, cache[index] = metadata;
 
 			simpleSort(cache);
