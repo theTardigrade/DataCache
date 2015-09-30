@@ -1,7 +1,7 @@
 (function(global, D, M) {
 
 	var newDateTest = (typeof D.now === "function"),
-		findIndex = function(cacheArray, key) {
+		simpleSearch = function(cacheArray, key) {
 			for (var i = 0, l = cacheArray.length, e = l; i < l; i += 2) {
 				if (i in cacheArray) {
 					if (key === cacheArray[i]) {
@@ -11,7 +11,7 @@
 					e = i;
 				}
 			} return e + 1;
-		},
+		}, // sequential search
 		simpleSort = function(cacheArray) {
 			for (var i = 0, j, temp; i < cacheArray.length; i += 2) {
 				if (cacheArray[i] > cacheArray[i + 2]) {
@@ -33,7 +33,7 @@
 			cache = (global.isNaN(cacheSize)) ? [] : new Array(cacheSize);
 
 		this.get = function(key, dataOnly) {
-			var index = findIndex(cache, key);
+			var index = simpleSearch(cache, key);
 
 			return (index === cache.length + 1)
 				? undefined
@@ -45,7 +45,7 @@
 				throw new TypeError("Key must be either a string or a number.");
 			}
 
-			var index = findIndex(cache, key),
+			var index = simpleSearch(cache, key),
 				metadata = {
 					data: data,
 					lastUpdated: (newDateTest) ? D.now() : new D().getTime()
@@ -62,7 +62,7 @@
 		};
 
 		this.unset = function(key) {
-			var index = findIndex(cache, key);
+			var index = simpleSearch(cache, key);
 
 			return (index === -1)
 				? false
@@ -74,7 +74,7 @@
 		};
 
 		this.getLastUpdated = function(key) {
-			var index = findIndex(cache, key);
+			var index = simpleSearch(cache, key);
 
 			return (index === cache.length + 1)
 				? undefined
