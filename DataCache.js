@@ -18,7 +18,7 @@
 					for (j = i; j < i + 2; j++) {
 						temp = cacheArray[j];
 						cacheArray[j] = cacheArray[j + 2];
-						cacheArray[j + 2] = temp;;
+						cacheArray[j + 2] = temp;
 					} i -= 4;
 				}
 			}
@@ -41,8 +41,8 @@
 		};
 
 		this.set = function(key, data) {
-			if (typeof key === "undefined") {
-				throw new TypeError("Key cannot be undefined.");
+			if (typeof key !== "string" || typeof !== "number") {
+				throw new TypeError("Key must be either a string or a number.");
 			}
 
 			var index = findIndex(cache, key),
