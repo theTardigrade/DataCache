@@ -11,7 +11,17 @@
 					e = i + 1;
 				}
 			} return e;
-		};
+		},
+		simpleArraySort = function(array) {
+			for (var i = 0, j, temp; i < array.length; i += 2) {
+				if (array[i] > array[i + 2]) {
+					for (j = i; j < i + 2; j++) {
+						temp = array[j];
+						array[j] = array[j + 2], array[j + 2] = temp;
+					} i -= 4;
+				}
+			}
+		}; // uses an implementation of gnome sort
 
 	function DataCache(size) {
 		var cacheSize = (function() {
@@ -30,6 +40,10 @@
 		};
 
 		this.set = function(key, data) {
+			if (typeof key === "undefined") {
+				throw new TypeError("Key cannot be undefined.");
+			}
+
 			var index = findIndex(cache, key),
 				metadata = {
 					data: data,
@@ -37,7 +51,10 @@
 				};
 
 			if (index === -1) index = cache.length + 1;
-			return (cache[index - 1] = key) && (cache[index] = metadata);
+			(cache[index - 1] = key) && (cache[index] = metadata);
+
+			simpleArraySort(cache);
+			return metadata;
 		};
 
 		this.unset = function(key) {
