@@ -41,7 +41,7 @@
 		};
 
 		this.set = function(key, data) {
-			if (typeof key !== "string" || typeof key !== "number") {
+			if (typeof key !== "string" && typeof key !== "number") {
 				throw new TypeError("Key must be either a string or a number.");
 			}
 
