@@ -22,6 +22,7 @@
 				} else if (key > cacheArray[midpoint]) {
 					lowerBound = midpoint + 1;
 				}
+
 			}
 		}, // binary search (only considers even-numbered indices, i.e. keys)
 		simpleSort = function(cacheArray) {
@@ -31,8 +32,7 @@
 						temp = cacheArray[j];
 						cacheArray[j] = cacheArray[j + 2];
 						cacheArray[j + 2] = temp;
-					}
-					i -= 4;
+					} i -= 4;
 				}
 			}
 		}; // uses an implementation of gnome sort
@@ -43,8 +43,7 @@
 				r = M.min(r, M.pow(2, 32) - 1); // maximum array length (4.29bn)
 				return M.max(r, 0); // disregard negatives
 			})(),
-			cache = (global.isNaN(cacheSize)) ? [] : new Array(cacheSize),
-			emptyIndices = [];
+			cache = (global.isNaN(cacheSize)) ? [] : new Array(cacheSize);
 
 		/* public functions */
 
@@ -67,8 +66,10 @@
 				? global.JSON.parse(global.JSON.stringify(data))
 				: data;
 
-			var index = (emptyIndices.length) ? emptyIndices.pop() : cache.length + 1,
-				metadata = {
+			var index = simpleSearch(cache, key);
+			if (index === -1) index = cache.length + 1;
+			
+			var metadata = {
 					data: dataClone,
 					lastUpdated: (newDateTest) ? D.now() : new D().getTime()
 				};
@@ -78,18 +79,28 @@
 				: metadata.lastUpdated;
 
 			cache[index - 1] = key, cache[index] = metadata;
-
 			simpleSort(cache);
 			return metadata;
 		};
 
 		this.unset = function(key) {
-			var index = simpleSearch(cache, key);
+			var index = simpleSearch(cache, key),
+				length = cache.length;
 
 			if (index === -1) return false;
 
-			emptyIndices.push(index);
-			return delete cache[index - 1] && delete cache[index];
+			if (length > 2) {
+				// swap current indices with final two indices in order to pop
+				for (var i = 1, temp; i >= 0; i--) {
+					temp = cache[index - i];
+					cache[index - i] = cache[length - i - 1];
+					cache[length - i - 1] = temp;
+				}
+			}
+
+			for (i = 0; i < 2; i++) cache.pop();
+			simpleSort(cache);
+			return true;
 		};
 
 		this.clear = function() {
