@@ -1,13 +1,18 @@
 (function(global, D, M) {
 
-	const ENVIRONMENT = (global.module && global.module.exports)
-			? "Node.js"
-			: undefined;
+	// boolean below set to true if, and only if, code is running in Node.js
+	const IS_NODE = !!(global.process && global.module && global.module.exports
+		&& (typeof global.require === "function"));
 
-//	var $ = (ENVIRONMENT) ? require("jquery") : global.jQuery||global.Zepto;
+//	var $ = (IS_NODE) ? require("jquery") : global.jQuery || global.Zepto;
 
-	var newDateTest = (typeof D.now === "function"),
-		simpleSearch = function(cacheArray, key) {
+	var isNow = (typeof D.now === "function"),
+		keyTypeTest = function(key) {
+			if (typeof key !== "string") {
+				throw new TypeError("Key must be a string.");
+			}
+		},
+		search = function(cacheArray, key) {
 			var lowerBound = 0,
 				upperBound = (cacheArray.length / 2) - 1,
 				midpoint;
@@ -22,10 +27,9 @@
 				} else if (key > cacheArray[midpoint]) {
 					lowerBound = midpoint + 1;
 				}
-
 			}
 		}, // binary search (only considers even-numbered indices, i.e. keys)
-		simpleSort = function(cacheArray) {
+		sort = function(cacheArray) {
 			for (var i = 0, j, temp; i < cacheArray.length; i += 2) {
 				if (cacheArray[i] > cacheArray[i + 2]) {
 					for (j = i; j < i + 2; j++) {
@@ -35,7 +39,7 @@
 					} i -= 4;
 				}
 			}
-		}; // uses an implementation of gnome sort
+		}; // implementation of gnome sort
 
 	function DataCache(size) {
 		var cacheSize = (function() {
@@ -43,12 +47,14 @@
 				r = M.min(r, M.pow(2, 32) - 1); // maximum array length (4.29bn)
 				return M.max(r, 0); // disregard negatives
 			})(),
-			cache = (global.isNaN(cacheSize)) ? [] : new Array(cacheSize);
+			cache = this._debugCache = (global.isNaN(cacheSize)) ? [] : new Array(cacheSize);
 
 		/* public functions */
 
 		this.get = function(key, dataOnly) {
-			var index = simpleSearch(cache, key);
+			keyTypeTest(key);
+
+			var index = search(cache, key);
 
 			return (index === -1)
 				? undefined
@@ -56,22 +62,20 @@
 		};
 
 		this.set = function(key, data) {
-			if (typeof key !== "string" && typeof key !== "number") {
-				throw new TypeError("Key must be either a string or a number.");
-			}
+			keyTypeTest(key);
+
+			var index = search(cache, key);
+			if (index === -1) index = cache.length + 1;
 
 			// if data is an object, array inclusive,
 			// deep copy rather than saving reference
 			var dataClone = (typeof data === "object")
 				? global.JSON.parse(global.JSON.stringify(data))
 				: data;
-
-			var index = simpleSearch(cache, key);
-			if (index === -1) index = cache.length + 1;
 			
 			var metadata = {
 					data: dataClone,
-					lastUpdated: (newDateTest) ? D.now() : new D().getTime()
+					lastUpdated: (isNow) ? D.now() : new D().getTime()
 				};
 
 			metadata.created = (cache[index] && cache[index].created)
@@ -79,12 +83,12 @@
 				: metadata.lastUpdated;
 
 			cache[index - 1] = key, cache[index] = metadata;
-			simpleSort(cache);
+			sort(cache);
 			return metadata;
 		};
 
 		this.unset = function(key) {
-			var index = simpleSearch(cache, key),
+			var index = search(cache, key),
 				length = cache.length;
 
 			if (index === -1) return false;
@@ -99,7 +103,7 @@
 			}
 
 			for (i = 0; i < 2; i++) cache.pop();
-			simpleSort(cache);
+			sort(cache);
 			return true;
 		};
 
@@ -108,7 +112,7 @@
 		};
 
 		this.getLastUpdated = function(key) {
-			var index = simpleSearch(cache, key);
+			var index = search(cache, key);
 
 			return (index === -1)
 				? undefined
@@ -116,9 +120,9 @@
 		};
 	};
 
-	if (ENVIRONMENT) { // Node.js environment
+	if (IS_NODE) {
 		global.module.exports = DataCache;
-	} else { // other environments
+	} else {
 		global.DataCache = DataCache;
 	}
 
