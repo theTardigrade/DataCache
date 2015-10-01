@@ -1,17 +1,29 @@
 (function(global, D, M) {
 
+	const ENVIRONMENT = (global.module && global.module.exports)
+			? "Node.js"
+			: undefined;
+
+//	var $ = (ENVIRONMENT) ? require("jquery") : global.jQuery||global.Zepto;
+
 	var newDateTest = (typeof D.now === "function"),
 		simpleSearch = function(cacheArray, key) {
-			for (var i = 0, l = cacheArray.length, e = l; i < l; i += 2) {
-				if (i in cacheArray) {
-					if (key === cacheArray[i]) {
-						return i + 1;
-					}
-				} else if (e === -1) {
-					e = i;
+			var lowerBound = 0,
+				upperBound = (cacheArray.length / 2) - 1,
+				midpoint;
+
+			for (;;) { // intentional infinite loop
+				midpoint = M.floor((lowerBound + upperBound) / 2) * 2;
+				if (cacheArray[midpoint] === key) return midpoint + 1;
+				if (lowerBound >= upperBound) return -1;
+
+				if (key < cacheArray[midpoint]) {
+					upperBound = midpoint - 1;
+				} else if (key > cacheArray[midpoint]) {
+					lowerBound = midpoint + 1;
 				}
-			} return e + 1;
-		}, // sequential search
+			}
+		}, // binary search (only considers even-numbered indices, i.e. keys)
 		simpleSort = function(cacheArray) {
 			for (var i = 0, j, temp; i < cacheArray.length; i += 2) {
 				if (cacheArray[i] > cacheArray[i + 2]) {
@@ -19,7 +31,8 @@
 						temp = cacheArray[j];
 						cacheArray[j] = cacheArray[j + 2];
 						cacheArray[j + 2] = temp;
-					} i -= 4;
+					}
+					i -= 4;
 				}
 			}
 		}; // uses an implementation of gnome sort
@@ -30,14 +43,15 @@
 				r = M.min(r, M.pow(2, 32) - 1); // maximum array length (4.29bn)
 				return M.max(r, 0); // disregard negatives
 			})(),
-			cache = (global.isNaN(cacheSize)) ? [] : new Array(cacheSize);
+			cache = (global.isNaN(cacheSize)) ? [] : new Array(cacheSize),
+			emptyIndices = [];
 
 		/* public functions */
 
 		this.get = function(key, dataOnly) {
 			var index = simpleSearch(cache, key);
 
-			return (index === cache.length + 1)
+			return (index === -1)
 				? undefined
 				: (dataOnly) ? cache[index].data : cache[index];
 		};
@@ -53,7 +67,7 @@
 				? global.JSON.parse(global.JSON.stringify(data))
 				: data;
 
-			var index = simpleSearch(cache, key),
+			var index = (emptyIndices.length) ? emptyIndices.pop() : cache.length + 1,
 				metadata = {
 					data: dataClone,
 					lastUpdated: (newDateTest) ? D.now() : new D().getTime()
@@ -72,9 +86,10 @@
 		this.unset = function(key) {
 			var index = simpleSearch(cache, key);
 
-			return (index === -1)
-				? false
-				: delete cache[index - 1] && delete cache[index];
+			if (index === -1) return false;
+
+			emptyIndices.push(index);
+			return delete cache[index - 1] && delete cache[index];
 		};
 
 		this.clear = function() {
@@ -84,13 +99,13 @@
 		this.getLastUpdated = function(key) {
 			var index = simpleSearch(cache, key);
 
-			return (index === cache.length + 1)
+			return (index === -1)
 				? undefined
 				: cache[index].lastUpdated;
 		};
 	};
 
-	if (global.module && global.module.exports) { // Node.js environment
+	if (ENVIRONMENT) { // Node.js environment
 		global.module.exports = DataCache;
 	} else { // other environments
 		global.DataCache = DataCache;
