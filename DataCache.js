@@ -32,6 +32,8 @@
 			})(),
 			cache = (global.isNaN(cacheSize)) ? [] : new Array(cacheSize);
 
+		/* public functions */
+
 		this.get = function(key, dataOnly) {
 			var index = simpleSearch(cache, key);
 
@@ -45,9 +47,15 @@
 				throw new TypeError("Key must be either a string or a number.");
 			}
 
+			// if data is an object, array inclusive,
+			// deep copy rather than saving reference
+			var dataClone = (typeof data === "object")
+				? global.JSON.parse(global.JSON.stringify(data))
+				: data;
+
 			var index = simpleSearch(cache, key),
 				metadata = {
-					data: data,
+					data: dataClone,
 					lastUpdated: (newDateTest) ? D.now() : new D().getTime()
 				};
 
