@@ -30,16 +30,25 @@
 			}
 		}, // binary search (only considers even-numbered indices, i.e. keys)
 		sort = function(cacheArray) {
-			for (var i = 0, j, temp; i < cacheArray.length; i += 2) {
-				if (cacheArray[i] > cacheArray[i + 2]) {
-					for (j = i; j < i + 2; j++) {
-						temp = cacheArray[j];
-						cacheArray[j] = cacheArray[j + 2];
-						cacheArray[j + 2] = temp;
-					} i -= 4;
+			var key, value;
+			for (var i = 0, l = cacheArray.length, j, k; i < l; i += 2) {
+				key = cacheArray[i];
+				value = cacheArray[i + 1];
+
+				for (j = i - 2; j > -1 && cacheArray[j] > key; j -= 2) {
+					for (k = j; k < j + 2; k++) {
+						cacheArray[k + 2] = cacheArray[k];
+					}
 				}
+
+				console.log(j, k)
+
+				cacheArray[j + 2] = key;
+				cacheArray[j + 3] = value;
 			}
-		}; // implementation of gnome sort
+		}; // insertion sort
+		// (used because array will always be almost sorted,
+		//  so relatively inexpensive)
 
 	function DataCache(size) {
 		var cacheSize = (function() {
