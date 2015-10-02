@@ -41,8 +41,6 @@
 					}
 				}
 
-				console.log(j, k)
-
 				cacheArray[j + 2] = key;
 				cacheArray[j + 3] = value;
 			}
