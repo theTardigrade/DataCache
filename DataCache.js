@@ -7,9 +7,9 @@
 //	var $ = (IS_NODE) ? require("jquery") : global.jQuery || global.Zepto;
 
 	var isNow = (typeof D.now === "function"),
-		keyTypeTest = function(key) {
-			if (typeof key !== "string") {
-				throw new TypeError("Key must be a string.");
+		keyTypeTest = function(key, type) {
+			if (typeof key !== type) {
+				throw new TypeError("Key must be a " + type + ".");
 			}
 		},
 		search = function(cacheArray, key) {
@@ -48,18 +48,51 @@
 		// (used because array will always be almost sorted,
 		//  so relatively inexpensive)
 
-	function DataCache(size) {
+	/*
+		options = {
+			size: 100,
+			keyType: "number"
+		}
+	*/
+
+	function DataCache(options) {
 		var cacheSize = (function() {
-				var r = (typeof size !== "number") ? parseInt(size, 10) : size;
+				var s = options && options.size,
+					r = (typeof s !== "number") ? parseInt(s, 10) : s;
 				r = M.min(r, M.pow(2, 32) - 1); // maximum array length (4.29bn)
 				return M.max(r, 0); // disregard negatives
 			})(),
-			cache = this._debugCache = (global.isNaN(cacheSize)) ? [] : new Array(cacheSize);
+			cache = this._debugCache = (global.isNaN(cacheSize)) ? [] : new Array(cacheSize),
+			keyType;
+
+		if (options && options.keyType) setKeyType(options.keyType);
+
+		function setKeyType(type) {
+			var allowableTypes = ["string", "number"],
+				isTypeAllowable = allowableTypes.some(function(v) {
+					return (type === v);
+				});
+
+			if (isTypeAllowable) {
+				keyType = type.toLowerCase();
+			} else {
+				var m = "The only acceptible key types are ";
+				allowableTypes.forEach(function(v, i, a) {
+					if (i < a.length - 1) {
+						m += "\"" + v + "\"";
+						if (i < a.length - 2) m += ", ";
+					} else {
+						m += " and \"" + v + "\".";
+					}
+				});
+				throw new TypeError(m);
+			}
+		}
 
 		/* public functions */
 
 		this.get = function(key, dataOnly) {
-			keyTypeTest(key);
+			keyTypeTest(key, keyType);
 
 			var index = search(cache, key);
 
@@ -69,7 +102,8 @@
 		};
 
 		this.set = function(key, data) {
-			keyTypeTest(key);
+			if (!keyType) setKeyType(typeof key); 
+			keyTypeTest(key, keyType);
 
 			var index = search(cache, key);
 			if (index === -1) index = cache.length + 1;
@@ -96,13 +130,14 @@
 
 		this.unset = function(key) {
 			var index = search(cache, key),
-				length = cache.length;
+				length = cache.length,
+				i;
 
 			if (index === -1) return false;
 
 			if (length > 2) {
 				// swap current indices with final two indices in order to pop
-				for (var i = 1, temp; i >= 0; i--) {
+				for (i = 1, temp; i >= 0; i--) {
 					temp = cache[index - i];
 					cache[index - i] = cache[length - i - 1];
 					cache[length - i - 1] = temp;
