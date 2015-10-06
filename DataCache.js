@@ -4,9 +4,13 @@
 	const IS_NODE = !!(global.process && global.module && global.module.exports
 		&& (typeof global.require === "function"));
 
-//	var $ = (IS_NODE) ? require("jquery") : global.jQuery || global.Zepto;
+	// cache key can be set to accept one of the following types
+	const ALLOWABLE_KEY_TYPES = ["string", "number"/*, "symbol"*/];
 
-	var isNow = (typeof D.now === "function"),
+	var exists = {
+			now: (typeof D.now === "function"),
+			freeze: (typeof Object.freeze == "function")
+		},
 		keyTypeTest = function(key, type) {
 			if (typeof key !== type) {
 				throw new TypeError("Key must be a " + type + ".");
@@ -30,12 +34,14 @@
 			}
 		}, // binary search (only considers even-numbered indices, i.e. keys)
 		sort = function(cacheArray) {
-			var key, value;
+			var key/*, strungKey*/, value;
 			for (var i = 0, l = cacheArray.length, j, k; i < l; i += 2) {
 				key = cacheArray[i];
+			//	strungKey = key.toString();
 				value = cacheArray[i + 1];
 
-				for (j = i - 2; j > -1 && cacheArray[j] > key; j -= 2) {
+				for (j = i - 2; j > -1; j -= 2) {
+					if (cacheArray[j]/*.toString()*/ <= /*strungKey*/key) break;
 					for (k = j; k < j + 2; k++) {
 						cacheArray[k + 2] = cacheArray[k];
 					}
@@ -49,12 +55,11 @@
 		//  so relatively inexpensive)
 
 	/*
-		options = {
+		new DataCache({
 			size: 100,
 			keyType: "number"
-		}
+		});
 	*/
-
 	function DataCache(options) {
 		var cacheSize = (function() {
 				var s = options && options.size,
@@ -65,29 +70,30 @@
 			cache = this._debugCache = (global.isNaN(cacheSize)) ? [] : new Array(cacheSize),
 			keyType;
 
-		if (options && options.keyType) setKeyType(options.keyType);
+		var setKeyType = (function() {
+			var errorMessage = "The only allowable key types are ";
+			ALLOWABLE_KEY_TYPES.forEach(function(v, i, a) {
+				var wrappedV = "\"" + v + "\"";
+				if (i < a.length - 2) {
+					errorMessage += wrappedV + ", ";
+				} else if (i < a.length - 1) {
+					errorMessage += wrappedV;
+				} else {
+					errorMessage += " and " + wrappedV + ".";
+				}
+			});
 
-		function setKeyType(type) {
-			var allowableTypes = ["string", "number"],
-				isTypeAllowable = allowableTypes.some(function(v) {
+			return function(type) {
+				var isTypeAllowable = ALLOWABLE_KEY_TYPES.some(function(v) {
 					return (type === v);
 				});
 
-			if (isTypeAllowable) {
-				keyType = type.toLowerCase();
-			} else {
-				var m = "The only acceptible key types are ";
-				allowableTypes.forEach(function(v, i, a) {
-					if (i < a.length - 1) {
-						m += "\"" + v + "\"";
-						if (i < a.length - 2) m += ", ";
-					} else {
-						m += " and \"" + v + "\".";
-					}
-				});
-				throw new TypeError(m);
-			}
-		}
+				if (isTypeAllowable) { keyType = type.toLowerCase(); }
+				else { throw TypeError(errorMessage); }
+			};
+		})();
+
+		if (options && options.keyType) setKeyType(options.keyType);
 
 		/* public functions */
 
@@ -108,15 +114,13 @@
 			var index = search(cache, key);
 			if (index === -1) index = cache.length + 1;
 
-			// if data is an object, array inclusive,
-			// deep copy rather than saving reference
-			var dataClone = (typeof data === "object")
-				? global.JSON.parse(global.JSON.stringify(data))
-				: data;
+			// use ECMAScript 5 freeze function to make objects immutable,
+			// therefore stored data can only be changed by re-setting it
+			if (typeof data === "object" && exists.freeze) Object.freeze(data);
 			
 			var metadata = {
-					data: dataClone,
-					lastUpdated: (isNow) ? D.now() : new D().getTime()
+					data: data,
+					lastUpdated: (exists.now) ? D.now() : new D().getTime()
 				};
 
 			metadata.created = (cache[index] && cache[index].created)
