@@ -1,15 +1,18 @@
 (function(global, D, M) {
 
 	// boolean below set to true if, and only if, code is running in Node.js
-	const IS_NODE = !!(global.process && global.module && global.module.exports
-		&& (typeof global.require === "function"));
+	const IS_NODE = !!(
+			global.module && global.module.exports
+			&& (typeof global.require === "function") && global.process
+			&& !global.isNaN(parseFloat(global.process.versions.node, 10))
+		);
 
 	// cache key can be set to accept one of the following types
 	const ALLOWABLE_KEY_TYPES = ["string", "number"/*, "symbol"*/];
 
 	var exists = {
 			now: (typeof D.now === "function"),
-			freeze: (typeof Object.freeze == "function")
+			freeze: (typeof Object.freeze === "function")
 		},
 		keyTypeTest = function(key, type) {
 			if (typeof key !== type) {
