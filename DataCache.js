@@ -123,12 +123,12 @@
 			
 			var metadata = {
 					data: data,
-					lastUpdated: (exists.now) ? D.now() : new D().getTime()
+					updated: (exists.now) ? D.now() : new D().getTime()
 				};
 
 			metadata.created = (cache[index] && cache[index].created)
 				? cache[index].created
-				: metadata.lastUpdated;
+				: metadata.updated;
 
 			cache[index - 1] = key, cache[index] = metadata;
 			sort(cache);
@@ -159,14 +159,23 @@
 		this.clear = function() {
 			return !!(cache = []);
 		};
+	};
 
-		this.getLastUpdated = function(key) {
-			var index = search(cache, key);
+	DataCache.prototype = {
 
-			return (index === -1)
-				? undefined
-				: cache[index].lastUpdated;
-		};
+		getData: function(key) {
+			var o = this.get(key);
+			return (!o) ? o : o.data;
+		},
+
+		getMetadata: function(key) {
+			var o = this.get(key);
+			if (!o) return o;
+			delete o.data;
+
+			return o; 
+		}
+
 	};
 
 	if (IS_NODE) {
