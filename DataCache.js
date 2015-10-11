@@ -152,8 +152,7 @@
 			}
 
 			for (i = 0; i < 2; i++) cache.pop();
-			sort(cache);
-			return true;
+			return !(sort(cache)); // true
 		};
 
 		this.clear = function() {
