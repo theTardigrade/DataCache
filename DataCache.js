@@ -119,7 +119,8 @@
 
 			// use ECMAScript 5 freeze function to make objects immutable,
 			// therefore stored data can only be changed by re-setting it
-			if (typeof data === "object" && exists.freeze) Object.freeze(data);
+			if (typeof data === "object" && exists.freeze)
+				global.Object.freeze(data);
 			
 			var object = {
 					data: data,
@@ -173,11 +174,11 @@
 		},
 
 		getMetadata: function(key) {
-			var o = this.get(key);
+			var o = this.get(key), m = {};
 			if (!o) return o;
-			delete o.data;
 
-			return o; 
+			for (var k in o) if (k !== "data") m[k] = o[k];
+			return m;
 		}
 
 	});
