@@ -121,18 +121,18 @@
 			// therefore stored data can only be changed by re-setting it
 			if (typeof data === "object" && exists.freeze) Object.freeze(data);
 			
-			var metadata = {
+			var object = {
 					data: data,
 					updated: (exists.now) ? D.now() : new D().getTime()
 				};
 
-			metadata.created = (cache[index] && cache[index].created)
+			object.created = (cache[index] && cache[index].created)
 				? cache[index].created
-				: metadata.updated;
+				: object.updated;
 
-			cache[index - 1] = key, cache[index] = metadata;
+			cache[index - 1] = key, cache[index] = object;
 			sort(cache);
-			return metadata;
+			return object;
 		};
 
 		this.unset = function(key) {
@@ -156,11 +156,16 @@
 		};
 
 		this.clear = function() {
-			return !!(cache = []);
+			return !!(cache = []); // true
 		};
 	};
 
-	DataCache.prototype = {
+	(function(prototype) {
+
+		for (var key in prototype)
+			DataCache.prototype[key] = prototype[key];
+
+	})({
 
 		getData: function(key) {
 			var o = this.get(key);
@@ -175,7 +180,7 @@
 			return o; 
 		}
 
-	};
+	});
 
 	if (IS_NODE) {
 		global.module.exports = DataCache;
