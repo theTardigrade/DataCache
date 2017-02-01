@@ -5,7 +5,8 @@
 	const OBJECT_TYPE = "object",
 		FUNCTION_TYPE = "function",
 		STRING_TYPE = "string",
-		NUMBER_TYPE = "number";
+		NUMBER_TYPE = "number",
+		UNDEFINED_TYPE = "undefined";
 
 	(function(global, module, D, M) {
 
@@ -165,6 +166,17 @@
 	
 				for (i = 0; i < 2; i++) cache.pop();
 				return !(sort(cache)); // true
+			};
+
+			this.iterate = function(callback, dataOnly) {
+				var l = cache.length;
+
+				for (var i = 0, l = cache.length; i < l; ++i) {
+					if (typeof cache[i] === UNDEFINED_TYPE)
+						break;
+
+					callback((dataOnly) ? cache[index].data : cache[index]);
+				}
 			};
 	
 			this.clear = function() {
