@@ -206,7 +206,7 @@
 			: (typeof global === OBJECT_TYPE)
 				? global
 				: this,
-		module,
+		this.module,
 		Date,
 		Math
 	);

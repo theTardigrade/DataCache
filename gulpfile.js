@@ -16,7 +16,9 @@ const plugins = ((keys) => {
 gulp.task("script", () => {
 
     return gulp.src(path.join(__dirname, "src", "DataCache.js"))
-		.pipe(plugins.babel({ presets: "latest" }))
+		.pipe(plugins.babel({
+			"plugins": [ "transform-es2015-block-scoping" ]
+		}))
 		.pipe(plugins.uglify())
 		.pipe(plugins["optimize-js"]())
         .pipe(gulp.dest(path.join(__dirname, "build")));
