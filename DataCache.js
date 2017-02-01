@@ -1,19 +1,27 @@
 (function(global, module, D, M) {
 
+	// return values of typeof function on various types
+	// for use in comparisons and conditionals
+	const OBJECT_TYPE = "object",
+		FUNCTION_TYPE = "function",
+		STRING_TYPE = "string",
+		NUMBER_TYPE = "number";
+
 	// boolean below set to true if, and only if, code is running in Node.js
 	const IS_NODE = ( 
-			typeof module === "object"
-			&& typeof module.exports === "object"
-			&& typeof process === "object"
+			typeof module === OBJECT_TYPE
+			&& typeof module.exports === OBJECT_TYPE
+			&& typeof process === OBJECT_TYPE
+			&& typeof process.versions == OBJECT_TYPE
 			&& !isNaN(parseFloat(process.versions.node, 10))
 		);
 
 	// cache key can be set to accept one of the following types
-	const ALLOWABLE_KEY_TYPES = ["string", "number"/*, "symbol"*/];
+	const ALLOWABLE_KEY_TYPES = [STRING_TYPE, NUMBER_TYPE/*, "symbol"*/];
 
 	var exists = {
-			now: (typeof D.now === "function"),
-			freeze: (typeof Object.freeze === "function")
+			now: (typeof D.now === FUNCTION_TYPE),
+			freeze: (typeof Object.freeze === FUNCTION_TYPE)
 		},
 		keyTypeTest = function(key, type) {
 			if (typeof key !== type) {
@@ -66,13 +74,13 @@
 	*/
 	function DataCache(options) {
 		var cacheSize = (function() {
-				var s = options && options.size,
-					r = (typeof s !== "number") ? parseInt(s, 10) : s;
+				var s = (options) ? options.size : NaN,
+					r = (s !== NUMBER_TYPE && !isNaN(s)) ? parseInt(s, 10) : s;
 				r = M.min(r, M.pow(2, 32) - 1); // maximum array length (4.29bn)
 				return M.max(r, 0); // disregard negatives
 			})(),
 			cache = this._debugCache = (isNaN(cacheSize)) ? [] : new Array(cacheSize),
-			keyType = "string";
+			keyType = STRING_TYPE;
 
 		var setKeyType = (function() {
 			var errorMessage = "The only allowable key types are ";
@@ -120,7 +128,7 @@
 
 			// use ECMAScript 5 freeze function to make objects immutable,
 			// therefore stored data can only be changed by re-setting it
-			if (typeof data === "object" && exists.freeze)
+			if (typeof data === OBJECT_TYPE && exists.freeze)
 				global.Object.freeze(data);
 			
 			var object = {
