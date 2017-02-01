@@ -2,7 +2,7 @@
   "name": "data-cache",
   "version": "1.0.0",
   "description": "Exposes a single constructor function for caching data.",
-  "main": "DataCache.js",
+  "main": "src/DataCache.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/theTardigrade/DataCache.git"
