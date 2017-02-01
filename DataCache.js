@@ -1,10 +1,11 @@
-(function(global, D, M) {
+(function(global, module, D, M) {
 
 	// boolean below set to true if, and only if, code is running in Node.js
-	const IS_NODE = !!(
-			global.module && global.module.exports
-			&& (typeof global.require === "function") && global.process
-			&& !global.isNaN(parseFloat(global.process.versions.node, 10))
+	const IS_NODE = ( 
+			typeof module === "object"
+			&& typeof module.exports === "object"
+			&& typeof process === "object"
+			&& !isNaN(parseFloat(process.versions.node, 10))
 		);
 
 	// cache key can be set to accept one of the following types
@@ -70,7 +71,7 @@
 				r = M.min(r, M.pow(2, 32) - 1); // maximum array length (4.29bn)
 				return M.max(r, 0); // disregard negatives
 			})(),
-			cache = this._debugCache = (global.isNaN(cacheSize)) ? [] : new Array(cacheSize),
+			cache = this._debugCache = (isNaN(cacheSize)) ? [] : new Array(cacheSize),
 			keyType = "string";
 
 		var setKeyType = (function() {
@@ -184,9 +185,9 @@
 	});
 
 	if (IS_NODE) {
-		global.module.exports = DataCache;
+		module.exports = DataCache;
 	} else {
 		global.DataCache = DataCache;
 	}
 
-})(this.window || this.global || this, Date, Math);
+})(this.window || this.global || this, module, Date, Math);
