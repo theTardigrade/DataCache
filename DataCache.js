@@ -71,7 +71,7 @@
 				return M.max(r, 0); // disregard negatives
 			})(),
 			cache = this._debugCache = (global.isNaN(cacheSize)) ? [] : new Array(cacheSize),
-			keyType;
+			keyType = "string";
 
 		var setKeyType = (function() {
 			var errorMessage = "The only allowable key types are ";
@@ -189,4 +189,4 @@
 		global.DataCache = DataCache;
 	}
 
-})(this, Date, Math);
+})(this.window || this.global || this, Date, Math);
