@@ -139,6 +139,12 @@
 					: (dataOnly) ? cache[index].data : cache[index];
 			};
 
+			this.has = (key) => {
+				keyTypeTest(key, keyType);
+
+				return (search(cache, key) > -1);
+			};
+
 			this.set = (key, data) => {
 				if (!keyType) setKeyType(typeof key); 
 				keyTypeTest(key, keyType);
