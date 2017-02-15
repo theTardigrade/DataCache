@@ -20,14 +20,14 @@
 				&& typeof process.versions == OBJECT_TYPE
 				&& !isNaN(parseFloat(process.versions.node, 10))
 			);
-	
+
 		// cache key can be set to accept one of the following types
 		const ALLOWABLE_KEY_TYPES = [STRING_TYPE, NUMBER_TYPE/*, "symbol"*/];
 
 		// used to ensure that underlying array does not exceed maximum allowed (i.e. 4.29bn)
 		const MAX_ARRAY_LENGTH = ((1 << 16) * (1 << 16)) - 1;
-	
-		var exists = {
+
+		let exists = {
 				now: (typeof D.now === FUNCTION_TYPE),
 				freeze: (typeof O.freeze === FUNCTION_TYPE)
 			},
@@ -37,15 +37,15 @@
 				}
 			},
 			search = function(cacheArray, key) {
-				var lowerBound = 0,
+				let lowerBound = 0,
 					upperBound = (cacheArray.length / 2) - 1,
 					midpoint;
-	
+
 				for (;;) { // intentional infinite loop
 					midpoint = M.floor((lowerBound + upperBound) / 2) * 2;
 					if (cacheArray[midpoint] === key) return midpoint + 1;
 					if (lowerBound >= upperBound) return -1;
-	
+
 					if (key < cacheArray[midpoint]) {
 						upperBound = midpoint - 1;
 					} else if (key > cacheArray[midpoint]) {
@@ -54,11 +54,11 @@
 				}
 			}, // binary search (only considers even-numbered indices, i.e. keys)
 			sort = function(cacheArray) {
-				var key, value;
-				for (var i = 0, l = cacheArray.length, j, k; i < l; i += 2) {
+				let key, value;
+				for (let i = 0, l = cacheArray.length, j, k; i < l; i += 2) {
 					key = cacheArray[i];
 					value = cacheArray[i + 1];
-	
+
 					for (j = i - 2; j > -1; j -= 2) {
 						if (cacheArray[j] <= key)
 							break;
@@ -66,14 +66,14 @@
 						for (k = j; k < j + 2; k++)
 							cacheArray[k + 2] = cacheArray[k];
 					}
-	
+
 					cacheArray[j + 2] = key;
 					cacheArray[j + 3] = value;
 				}
 			}; // insertion sort
 			// (used because array will always be almost sorted,
 			//  so relatively inexpensive)
-	
+
 		/*
 			new DataCache({
 				size: 100,
@@ -81,8 +81,8 @@
 			});
 		*/
 		function DataCache(options) {
-			var cacheSize = (function() {
-					var s = (options) ? options.size : NaN,
+			let cacheSize = (function() {
+					let s = (options) ? options.size : NaN,
 						r = (s !== NUMBER_TYPE && !isNaN(s)) ? parseInt(s, 10) : s;
 					r *= 2; // double to account for key-value consecutive pairs
 					r = M.min(r, MAX_ARRAY_LENGTH);
@@ -90,82 +90,84 @@
 				})(),
 				cache = this._debugCache = [],
 				keyType = STRING_TYPE;
-	
-			var setKeyType = (function() {
-				var errorMessage = "The only allowable key types are ";
-				ALLOWABLE_KEY_TYPES.forEach(function(v, i, a) {
-					var wrappedV = "\"" + v + "\"";
-					if (i < a.length - 2) {
-						errorMessage += wrappedV + ", ";
-					} else if (i < a.length - 1) {
-						errorMessage += wrappedV;
-					} else {
-						errorMessage += " and " + wrappedV + ".";
-					}
-				});
-	
-				return function(type) {
-					var isTypeAllowable = ALLOWABLE_KEY_TYPES.some(function(v) {
-						return (type === v);
+
+			let setKeyType = (function() {
+					let errorMessage = "The only allowable key types are ";
+					ALLOWABLE_KEY_TYPES.forEach(function(v, i, a) {
+						let wrappedV = "\"" + v + "\"";
+						if (i < a.length - 2) {
+							errorMessage += wrappedV + ", ";
+						} else if (i < a.length - 1) {
+							errorMessage += wrappedV;
+						} else {
+							errorMessage += " and " + wrappedV + ".";
+						}
 					});
-	
-					if (isTypeAllowable) { keyType = type.toLowerCase(); }
-					else { throw global.TypeError(errorMessage); }
-				};
-			})();
-	
+
+					return function(type) {
+						let isTypeAllowable = ALLOWABLE_KEY_TYPES.some(function(v) {
+							return (type === v);
+						});
+
+						if (isTypeAllowable)
+							keyType = type.toLowerCase();
+						else
+							throw global.TypeError(errorMessage);
+					};
+				})();
+
 			if (options && typeof options.keyType === STRING_TYPE)
 				setKeyType(options.keyType);
-	
+
 			/* public functions */
-	
+
 			this.get = function(key, dataOnly) {
 				keyTypeTest(key, keyType);
-	
-				var index = search(cache, key);
-	
+
+				let index = search(cache, key);
+
 				return (index === -1)
 					? undefined
 					: (dataOnly) ? cache[index].data : cache[index];
 			};
-	
+
 			this.set = function(key, data) {
 				if (!keyType) setKeyType(typeof key); 
 				keyTypeTest(key, keyType);
 
-				var index = search(cache, key);
+				let index = search(cache, key);
 				if (index === -1) index = cache.length + 1;
 
 				// ensure that cache never grows beyond maximum bound
 				if (index >= cacheSize)
 					throw new global.Error("Maximum number of elements reached.");
-	
+
 				// use ECMAScript 5 freeze function to make objects immutable,
 				// therefore stored data can only be changed by re-setting it
 				if (typeof data === OBJECT_TYPE && exists.freeze)
 					O.freeze(data);
 				
-				var object = {
+				let object = {
 						data: data,
 						updated: (exists.now) ? D.now() : new D().getTime()
 					};
-	
+
 				object.created = (cache[index] && cache[index].created)
 					? cache[index].created
 					: object.updated;
-	
+
 				cache[index - 1] = key, cache[index] = object;
 				sort(cache);
 				return object;
 			};
-	
+
 			this.unset = function(key) {
-				var index = search(cache, key),
+				let index = search(cache, key),
 					length = cache.length,
 					i;
-	
+
 				if (index === -1) return false;
-	
+
 				if (length > 2) {
 					// swap current indices with final two indices in order to pop
 					for (i = 1, temp; i >= 0; i--) {
@@ -174,53 +176,59 @@
 						cache[length - i - 1] = temp;
 					}
 				}
-	
+
 				for (i = 0; i < 2; i++) cache.pop();
 				return !(sort(cache)); // true
 			};
 
 			this.iterate = function(callback, dataOnly) {
-				for (var i = 0, l = cache.length; i < l; ++i) {
+				for (let i = 0, l = cache.length; i < l; ++i) {
 					if (typeof cache[i] === UNDEFINED_TYPE)
 						continue;
 
 					callback((dataOnly) ? cache[index].data : cache[index]);
 				}
 			};
-	
+
 			this.clear = function() {
 				return !!(cache = []); // true
 			};
 		};
-	
+
 		(function(prototype) {
-	
-			for (var key in prototype)
+
+			for (let key in prototype)
 				DataCache.prototype[key] = prototype[key];
-	
+
 		})({
-	
+
 			getData: function(key) {
-				var o = this.get(key);
+				let o = this.get(key);
 				return (!o) ? o : o.data;
 			},
-	
+
 			getMetadata: function(key) {
-				var o = this.get(key), m = {};
-				if (!o) return o;
-	
-				for (var k in o) if (k !== "data") m[k] = o[k];
+				let o = this.get(key),
+					m = {};
+
+				if (!o)
+					return o;
+
+				for (let k in o)
+					if (k !== "data")
+						m[k] = o[k];
+
 				return m;
 			}
-	
+
 		});
-	
+
 		if (IS_NODE) {
 			module.exports = DataCache;
 		} else {
 			global.DataCache = DataCache;
 		}
-	
+
 	})(
 		(typeof window === OBJECT_TYPE)
 			? window
