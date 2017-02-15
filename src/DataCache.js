@@ -183,11 +183,11 @@
 			};
 
 			this.iterate = (callback, dataOnly) => {
-				for (let i = 0, l = cache.length; i < l; ++i) {
+				for (let i = 1, l = cache.length; i < l; i += 2) {
 					if (typeof cache[i] === UNDEFINED_TYPE)
 						continue;
 
-					callback((dataOnly) ? cache[index].data : cache[index]);
+					callback((dataOnly) ? cache[i].data : cache[i]);
 				}
 			};
 
@@ -204,8 +204,7 @@
 		})({
 
 			getData: function(key) {
-				let o = this.get(key);
-				return (!o) ? o : o.data;
+				return this.get(key, true);
 			},
 
 			getMetadata: function(key) {
