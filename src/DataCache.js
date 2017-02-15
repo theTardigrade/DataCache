@@ -8,7 +8,7 @@
 		NUMBER_TYPE = "number",
 		UNDEFINED_TYPE = "undefined";
 
-	(function(global, module, D, M) {
+	(function(global, module, D, M, O) {
 
 		"use strict";
 
@@ -29,7 +29,7 @@
 	
 		var exists = {
 				now: (typeof D.now === FUNCTION_TYPE),
-				freeze: (typeof Object.freeze === FUNCTION_TYPE)
+				freeze: (typeof O.freeze === FUNCTION_TYPE)
 			},
 			keyTypeTest = function(key, type) {
 				if (typeof key !== type) {
@@ -54,17 +54,17 @@
 				}
 			}, // binary search (only considers even-numbered indices, i.e. keys)
 			sort = function(cacheArray) {
-				var key/*, strungKey*/, value;
+				var key, value;
 				for (var i = 0, l = cacheArray.length, j, k; i < l; i += 2) {
 					key = cacheArray[i];
-				//	strungKey = key.toString();
 					value = cacheArray[i + 1];
 	
 					for (j = i - 2; j > -1; j -= 2) {
-						if (cacheArray[j]/*.toString()*/ <= /*strungKey*/key) break;
-						for (k = j; k < j + 2; k++) {
+						if (cacheArray[j] <= key)
+							break;
+
+						for (k = j; k < j + 2; k++)
 							cacheArray[k + 2] = cacheArray[k];
-						}
 					}
 	
 					cacheArray[j + 2] = key;
@@ -143,7 +143,7 @@
 				// use ECMAScript 5 freeze function to make objects immutable,
 				// therefore stored data can only be changed by re-setting it
 				if (typeof data === OBJECT_TYPE && exists.freeze)
-					global.Object.freeze(data);
+					O.freeze(data);
 				
 				var object = {
 						data: data,
@@ -229,7 +229,8 @@
 				: this,
 		this.module,
 		Date,
-		Math
+		Math,
+		Object
 	);
 
 })();
