@@ -171,11 +171,9 @@
 			};
 
 			this.iterate = function(callback, dataOnly) {
-				var l = cache.length;
-
 				for (var i = 0, l = cache.length; i < l; ++i) {
 					if (typeof cache[i] === UNDEFINED_TYPE)
-						break;
+						continue;
 
 					callback((dataOnly) ? cache[index].data : cache[index]);
 				}
