@@ -62,10 +62,9 @@
 				}
 			}, // binary search (only considers even-numbered indices, i.e. keys)
 			sort = (cacheArray) => {
-				let key, value;
 				for (let i = 0, l = cacheArray.length, j, k; i < l; i += 2) {
-					key = cacheArray[i];
-					value = cacheArray[i + 1];
+					let key = cacheArray[i],
+						value = cacheArray[i + 1];
 
 					for (j = i - 2; j > -1; j -= 2) {
 						if (cacheArray[j] <= key)
@@ -148,11 +147,15 @@
 			};
 
 			this.set = (key, data) => {
-				if (!keyType) setKeyType(typeof key); 
+				if (!keyType)
+					setKeyType(typeof key);
+
 				keyTypeTest(key, keyType);
 
 				let index = search(cache, key);
-				if (index === -1) index = cache.length + 1;
+
+				if (index === -1)
+					index = cache.length + 1;
 
 				// ensure that cache never grows beyond maximum bound
 				if (index >= cacheSize)
@@ -172,7 +175,9 @@
 					? cache[index].created
 					: object.updated;
 
-				cache[index - 1] = key, cache[index] = object;
+				cache[index - 1] = key;
+				cache[index] = object;
+
 				sort(cache);
 				return object;
 			};
@@ -181,18 +186,19 @@
 				let index = search(cache, key),
 					length = cache.length;
 
-				if (index === -1) return false;
+				if (index === -1)
+					return false;
 
 				if (length > 2) {
 					// swap current indices with final two indices in order to pop
-					for (i = 1, temp; i >= 0; i--) {
+					for (let i = 1, temp; i >= 0; --i) {
 						temp = cache[index - i];
 						cache[index - i] = cache[length - i - 1];
 						cache[length - i - 1] = temp;
 					}
 				}
 
-				for (let i = 0; i < 2; i++)
+				for (let i = 0; i < 2; ++i)
 					cache.pop();
 
 				return !(sort(cache)); // true
