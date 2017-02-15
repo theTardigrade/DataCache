@@ -39,11 +39,6 @@
 				{ key: "freeze", object: O },
 				{ key: "now", object: D }
 			]),
-			keyTypeTest = (key, type) => {
-				if (typeof key !== type) {
-					throw new TypeError("Key must be a " + type + ".");
-				}
-			},
 			search = (cacheArray, key) => {
 				let lowerBound = 0,
 					upperBound = (cacheArray.length / 2) - 1,
@@ -82,11 +77,14 @@
 			//  so relatively inexpensive)
 
 		/*
+			example:
+
 			new DataCache({
 				size: 100,
 				keyType: "number"
 			});
 		*/
+
 		function DataCache(options) {
 			let cacheSize = (() => {
 					let s = (options) ? options.size : NaN,
@@ -129,14 +127,17 @@
 			/* public functions */
 
 			this.get = (key, options) => {
-				keyTypeTest(key, keyType);
+				let value = null;
+
+				if (typeof key !== keyType)
+					return value;
 
 				let index = search(cache, key);
 
 				if (index === -1)
-					return null;
+					return value;
 
-				let value = cache[index];
+				value = cache[index];
 
 				if (options) {
 					let optionCount = 0;
@@ -164,16 +165,15 @@
 			};
 
 			this.has = (key) => {
-				keyTypeTest(key, keyType);
-
-				return (search(cache, key) > -1);
+				return (typeof key === keyType && search(cache, key) > -1);
 			};
 
 			this.set = (key, data) => {
 				if (!keyType)
 					setKeyType(typeof key);
 
-				keyTypeTest(key, keyType);
+				if (typeof key !== keyType)
+					throw new TypeError("Key must be a " + type + ".");
 
 				let index = search(cache, key);
 
@@ -206,6 +206,9 @@
 			};
 
 			this.unset = (key) => {
+				if (typeof key !== keyType)
+					return false;
+
 				let index = search(cache, key),
 					length = cache.length;
 
