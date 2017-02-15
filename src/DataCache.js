@@ -8,7 +8,7 @@
 		NUMBER_TYPE = "number",
 		UNDEFINED_TYPE = "undefined";
 
-	(function(global, module, D, M, O) {
+	((global, module, D, M, O) => {
 
 		"use strict";
 
@@ -41,7 +41,7 @@
 			]),
 			keyTypeTest = (key, type) => {
 				if (typeof key !== type) {
-					throw new global.TypeError("Key must be a " + type + ".");
+					throw new TypeError("Key must be a " + type + ".");
 				}
 			},
 			search = (cacheArray, key) => {
@@ -133,11 +133,28 @@
 
 				let index = search(cache, key);
 
-				return (index === -1)
-					? undefined
-					: (options && options.dataOnly)
-						? cache[index].data
-						: cache[index];
+				if (index === -1)
+					return null;
+
+				if (options && options.dataOnly && options.metadataOnly)
+					throw new Error("The \"dataOnly\" and \"metadataOnly\" options are mutually contradictory.");
+
+				let value = cache[index];
+
+				if (options && options.metadataOnly) {
+					let metadata = {};
+
+					for (let vKey in value)
+						if (vKey !== "data")
+							metadata[vKey] = value[vKey];
+
+					return metadata;
+				}
+
+				if (options && options.dataOnly)
+					value = value.data;
+
+				return value;
 			};
 
 			this.has = (key) => {
@@ -230,23 +247,17 @@
 
 		})({
 
-			getData: function(key) {
-				return this.get(key, true);
-			},
+			getData: ((options) => {
+				return function(key) {
+					return this.get(key, options);
+				}
+			})({ dataOnly: true }),
 
-			getMetadata: function(key) {
-				let o = this.get(key),
-					m = {};
-
-				if (!o)
-					return o;
-
-				for (let k in o)
-					if (k !== "data")
-						m[k] = o[k];
-
-				return m;
-			}
+			getMetadata: ((options) => {
+				return function(key) {
+					return this.get(key, options);
+				}
+			})({ metadataOnly: true })
 
 		});
 
