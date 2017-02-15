@@ -41,7 +41,7 @@
 			]),
 			keyTypeTest = (key, type) => {
 				if (typeof key !== type) {
-					throw new TypeError("Key must be a " + type + ".");
+					throw new global.TypeError("Key must be a " + type + ".");
 				}
 			},
 			search = (cacheArray, key) => {
@@ -129,14 +129,16 @@
 
 			/* public functions */
 
-			this.get = (key, dataOnly) => {
+			this.get = (key, options) => {
 				keyTypeTest(key, keyType);
 
 				let index = search(cache, key);
 
 				return (index === -1)
 					? undefined
-					: (dataOnly) ? cache[index].data : cache[index];
+					: (options && options.dataOnly)
+						? cache[index].data
+						: cache[index];
 			};
 
 			this.has = (key) => {
@@ -196,7 +198,9 @@
 				return !(sort(cache)); // true
 			};
 
-			this.iterate = (callback, dataOnly) => {
+			this.iterate = (callback, options) => {
+				let dataOnly = (options && options.dataOnly);
+
 				for (let i = 1, l = cache.length; i < l; i += 2) {
 					if (typeof cache[i] === UNDEFINED_TYPE)
 						continue;
