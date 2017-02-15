@@ -28,8 +28,9 @@
 		const MAX_ARRAY_LENGTH = ((1 << 16) * (1 << 16)) - 1;
 
 		let exists = {
-				now: (typeof D.now === FUNCTION_TYPE),
-				freeze: (typeof O.freeze === FUNCTION_TYPE)
+				assign: (typeof O.assign === FUNCTION_TYPE),
+				freeze: (typeof O.freeze === FUNCTION_TYPE),
+				now: (typeof D.now === FUNCTION_TYPE)
 			},
 			keyTypeTest = (key, type) => {
 				if (typeof key !== type) {
@@ -198,8 +199,11 @@
 
 		(function(prototype) {
 
-			for (let key in prototype)
-				DataCache.prototype[key] = prototype[key];
+			if (exists.assign)
+				O.assign(DataCache.prototype, prototype);
+			else
+				for (let key in prototype)
+					DataCache.prototype[key] = prototype[key];
 
 		})({
 
