@@ -8,7 +8,7 @@
 		NUMBER_TYPE = "number",
 		UNDEFINED_TYPE = "undefined";
 
-	((global, module, Error, TypeError, D, M, O) => {
+	((global, module, Error, TypeError, D, M, O, N) => {
 
 		"use strict";
 
@@ -31,12 +31,13 @@
 				let o = {};
 				for (let i = 0, l = data.length; i < l; ++i) {
 					let d = data[i];
-					o[d.key] = (typeof d.object[d.key] === FUNCTION_TYPE);
+					o[d.key] = (typeof (O || d.object)[d.key] === (FUNCTION_TYPE || d.type));
 				}
 				return o;
 			})([
-				{ key: "assign", object: O },
-				{ key: "freeze", object: O },
+				{ key: "assign" },
+				{ key: "defineProperty" },
+				{ key: "freeze" },
 				{ key: "now", object: D }
 			]),
 			search = (cacheArray, key) => {
@@ -80,56 +81,20 @@
 			example:
 
 			new DataCache({
-				size: 100,
+				capacity: 100,
 				keyType: "number"
 			});
 		*/
 
 		function DataCache(options) {
-			let cacheSize = (() => {
-					let s = (options) ? options.size : NaN,
-						r = (s !== NUMBER_TYPE && !isNaN(s)) ? parseInt(s, 10) : s;
-					r *= 2; // double to account for key-value consecutive pairs
-					r = M.min(r, MAX_ARRAY_LENGTH);
-					return M.max(r, 0); // disregard negatives
-				})(),
-				cache = this._debugCache = [],
-				keyType = STRING_TYPE;
-
-			let setKeyType = (() => {
-					let errorMessage = "The only allowable key types are ";
-					ALLOWABLE_KEY_TYPES.forEach(function(v, i, a) {
-						let wrappedV = "\"" + v + "\"";
-						if (i < a.length - 2) {
-							errorMessage += wrappedV + ", ";
-						} else if (i < a.length - 1) {
-							errorMessage += wrappedV;
-						} else {
-							errorMessage += " and " + wrappedV + ".";
-						}
-					});
-
-					return function(type) {
-						let isTypeAllowable = ALLOWABLE_KEY_TYPES.some(function(v) {
-							return (type === v);
-						});
-
-						if (isTypeAllowable)
-							keyType = type.toLowerCase();
-						else
-							throw TypeError(errorMessage);
-					};
-				})();
-
-			if (options && typeof options.keyType === STRING_TYPE)
-				setKeyType(options.keyType);
+			let cache = this._debugCache = [];
 
 			/* public functions */
 
-			this.get = (key, options) => {
+			this.get = function(key, options) {
 				let value = null;
 
-				if (typeof key !== keyType)
+				if (typeof key !== this.keyType)
 					return value;
 
 				let index = search(cache, key);
@@ -164,25 +129,26 @@
 				return value;
 			};
 
-			this.has = (key) => {
-				return (typeof key === keyType && search(cache, key) > -1);
+			this.has = function(key) {
+				return (typeof key === this.keyType && search(cache, key) > -1);
 			};
 
-			this.set = (key, data) => {
-				if (!keyType)
-					setKeyType(typeof key);
+			this.set = function(key, data) {
+				if (this.keyType !== STRING_TYPE)
+					this.keyType = (typeof key);
 
-				if (typeof key !== keyType)
-					throw new TypeError("Key must be a " + type + ".");
+				if (typeof key !== this.keyType)
+					throw new TypeError("Key must be a " + this.keyType + ".");
 
 				let index = search(cache, key);
 
 				if (index === -1)
 					index = cache.length + 1;
 
-				// ensure that cache never grows beyond maximum bound
-				if (index >= cacheSize)
-					throw new Error("Maximum number of elements reached.");
+				// when capacity is reached, start writing over oldest data
+				// use double value to account for consecutive key-value pairs
+				if (index >= this.capacity * 2)
+					index = this._oldestIndex;
 
 				// use ECMAScript 5 freeze function to make objects immutable,
 				// therefore stored data can only be changed by re-setting it
@@ -205,8 +171,8 @@
 				return object;
 			};
 
-			this.unset = (key) => {
-				if (typeof key !== keyType)
+			this.unset = function(key) {
+				if (typeof key !== this.keyType)
 					return false;
 
 				let index = search(cache, key),
@@ -237,17 +203,127 @@
 				for (let i = 0, l = cache.length; i < l; i += 2) {
 					let key = cache[i];
 
-					if (typeof key !== keyType)
+					if (typeof key !== this.keyType)
 						continue;
 
-					callback(curriedGet(key));
+					callback(key, curriedGet(key));
 				}
 			};
 
 			this.clear = () => {
 				return !!(cache = []); // true
 			};
-		};
+
+			/* initialize getters and setters */
+
+			if (!exists.defineProperty)
+				throw Error("Browser does not support use of getters and setters.");
+
+			let definePropertyHere = (prop, options) => {
+					O.defineProperty(this, prop, options);
+				};
+
+			/* public getters and setters */
+
+			let privateKeyType = STRING_TYPE; // default
+
+			definePropertyHere("keyType", {
+				get: (() => privateKeyType),
+				set: (() => {
+					let errorMessage = "The only allowable key types are ";
+
+					ALLOWABLE_KEY_TYPES.forEach(function(v, i, a) {
+						let wrappedV = "\"" + v + "\"";
+
+						if (i < a.length - 2) {
+							errorMessage += wrappedV + ", ";
+						} else if (i < a.length - 1) {
+							errorMessage += wrappedV;
+						} else {
+							errorMessage += " and " + wrappedV + ".";
+						}
+					});
+
+					return function(keyType) {
+						let isTypeAllowable = (() => {
+								for (let i = 0, l = ALLOWABLE_KEY_TYPES.length; i < l; ++i)
+									if (keyType === ALLOWABLE_KEY_TYPES[i])
+										return true;
+								return false;
+							})();
+
+						if (keyType === privateKeyType)
+							return;
+
+						if (isTypeAllowable)
+							privateKeyType = keyType.toLowerCase();
+						else
+							throw new TypeError(errorMessage);
+					};
+				})()
+			});
+
+			if (options && typeof options.keyType !== UNDEFINED_TYPE)
+				this.keyType = options.keyType;
+
+
+			definePropertyHere("size", {
+				get: (() => cache.length / 2)
+			});
+
+
+			let privateCapacity = 0;
+
+			definePropertyHere("capacity", {
+				get: (() => privateCapacity),
+				set: (capacity) => {
+					if (typeof capacity !== NUMBER_TYPE || capacity < 0 || capacity === privateCapacity) {
+						return false;
+					} else if (capacity < privateCapacity) {
+						let difference = privateCapacity - capacity;
+
+						for (let i = 0, l = Math.min(this.size, capacity); i < l; i += 2) {
+							let index = this._getOldestIndex();
+							this.unset(cache[index - 1]);
+						}
+					}
+
+					let value = (capacity !== NUMBER_TYPE && !isNaN(capacity))
+							? parseInt(capacity, 10)
+							: capacity;
+
+					value = M.min(value, MAX_ARRAY_LENGTH);
+
+					if (isNaN(value))
+						throw new TypeError("Suggested capacity cannot be parsed.");
+
+					privateCapacity = M.max(value, 0); // disregard negatives;
+					return true;
+				}
+			});
+
+			this.capacity = (options && typeof options.capacity !== UNDEFINED_TYPE)
+				? options.capacity
+				: MAX_ARRAY_LENGTH;
+
+			/* private getters and setters */
+
+			definePropertyHere("_oldestIndex", {
+				get: () => {
+					let index = 1,
+						updated = N.MAX_VALUE || M.pow(2, 48);
+
+					for (let i = index, l = cache.length; i < l; i += 2) {
+						if (cache[i].updated < updated) {
+							updated = cache[i].updated;
+							index = i;
+						}
+					}
+
+					return index;
+				}
+			});
+		}
 
 		(function(prototype) {
 
@@ -269,7 +345,11 @@
 				return function(key) {
 					return this.get(key, options);
 				}
-			})({ metadataOnly: true })
+			})({ metadataOnly: true }),
+
+			isFull: function() {
+				return this.size === this.capacity;
+			}
 
 		});
 
@@ -290,7 +370,8 @@
 		TypeError,
 		Date,
 		Math,
-		Object
+		Object,
+		Number
 	);
 
 })();
