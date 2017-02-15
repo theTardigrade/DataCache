@@ -8,7 +8,7 @@
 		NUMBER_TYPE = "number",
 		UNDEFINED_TYPE = "undefined";
 
-	((global, module, D, M, O) => {
+	((global, module, Error, TypeError, D, M, O) => {
 
 		"use strict";
 
@@ -119,7 +119,7 @@
 						if (isTypeAllowable)
 							keyType = type.toLowerCase();
 						else
-							throw global.TypeError(errorMessage);
+							throw TypeError(errorMessage);
 					};
 				})();
 
@@ -176,7 +176,7 @@
 
 				// ensure that cache never grows beyond maximum bound
 				if (index >= cacheSize)
-					throw new global.Error("Maximum number of elements reached.");
+					throw new Error("Maximum number of elements reached.");
 
 				// use ECMAScript 5 freeze function to make objects immutable,
 				// therefore stored data can only be changed by re-setting it
@@ -274,6 +274,8 @@
 				? global
 				: this,
 		this.module,
+		Error,
+		TypeError,
 		Date,
 		Math,
 		Object
