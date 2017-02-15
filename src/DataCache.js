@@ -136,23 +136,29 @@
 				if (index === -1)
 					return null;
 
-				if (options && options.dataOnly && options.metadataOnly)
-					throw new Error("The \"dataOnly\" and \"metadataOnly\" options are mutually contradictory.");
-
 				let value = cache[index];
 
-				if (options && options.metadataOnly) {
-					let metadata = {};
+				if (options) {
+					let optionCount = 0;
 
-					for (let vKey in value)
-						if (vKey !== "data")
-							metadata[vKey] = value[vKey];
+					if (options.metadataOnly) {
+						let metadata = {};
+						++optionCount;
 
-					return metadata;
+						for (let vKey in value)
+							if (vKey !== "data")
+								metadata[vKey] = value[vKey];
+
+						return metadata;
+					}
+
+					if (options.dataOnly) {
+						if (optionCount)
+							throw new Error("The \"dataOnly\" and \"metadataOnly\" options are mutually contradictory.");
+
+						value = value.data;
+					}
 				}
-
-				if (options && options.dataOnly)
-					value = value.data;
 
 				return value;
 			};
@@ -221,14 +227,14 @@
 				return !(sort(cache)); // true
 			};
 
-			this.iterate = (callback, options) => {
+			this.iterate = function(callback, options) {
 				let dataOnly = (options && options.dataOnly);
 
-				for (let i = 1, l = cache.length; i < l; i += 2) {
+				for (let i = 0, l = cache.length; i < l; i += 2) {
 					if (typeof cache[i] === UNDEFINED_TYPE)
 						continue;
 
-					callback((dataOnly) ? cache[i].data : cache[i]);
+					callback(this.get(cache[i], options));
 				}
 			};
 
