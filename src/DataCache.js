@@ -27,11 +27,18 @@
 		// used to ensure that underlying array does not exceed maximum allowed (i.e. 4.29bn)
 		const MAX_ARRAY_LENGTH = ((1 << 16) * (1 << 16)) - 1;
 
-		let exists = {
-				assign: (typeof O.assign === FUNCTION_TYPE),
-				freeze: (typeof O.freeze === FUNCTION_TYPE),
-				now: (typeof D.now === FUNCTION_TYPE)
-			},
+		let exists = ((data) => {
+				let o = {};
+				for (let i = 0, l = data.length; i < l; ++i) {
+					let d = data[i];
+					o[d.key] = (typeof d.object[d.key] === FUNCTION_TYPE);
+				}
+				return o;
+			})([
+				{ key: "assign", object: O },
+				{ key: "freeze", object: O },
+				{ key: "now", object: D }
+			]),
 			keyTypeTest = (key, type) => {
 				if (typeof key !== type) {
 					throw new TypeError("Key must be a " + type + ".");
