@@ -23,6 +23,9 @@
 	
 		// cache key can be set to accept one of the following types
 		const ALLOWABLE_KEY_TYPES = [STRING_TYPE, NUMBER_TYPE/*, "symbol"*/];
+
+		// used to ensure that underlying array does not exceed maximum allowed (i.e. 4.29bn)
+		const MAX_ARRAY_LENGTH = ((1 << 16) * (1 << 16)) - 1;
 	
 		var exists = {
 				now: (typeof D.now === FUNCTION_TYPE),
@@ -81,10 +84,11 @@
 			var cacheSize = (function() {
 					var s = (options) ? options.size : NaN,
 						r = (s !== NUMBER_TYPE && !isNaN(s)) ? parseInt(s, 10) : s;
-					r = M.min(r, M.pow(2, 32) - 1); // maximum array length (4.29bn)
+					r *= 2; // double to account for key-value consecutive pairs
+					r = M.min(r, MAX_ARRAY_LENGTH);
 					return M.max(r, 0); // disregard negatives
 				})(),
-				cache = this._debugCache = (isNaN(cacheSize)) ? [] : new Array(cacheSize),
+				cache = this._debugCache = [],
 				keyType = STRING_TYPE;
 	
 			var setKeyType = (function() {
@@ -106,7 +110,7 @@
 					});
 	
 					if (isTypeAllowable) { keyType = type.toLowerCase(); }
-					else { throw TypeError(errorMessage); }
+					else { throw global.TypeError(errorMessage); }
 				};
 			})();
 	
@@ -127,9 +131,13 @@
 			this.set = function(key, data) {
 				if (!keyType) setKeyType(typeof key); 
 				keyTypeTest(key, keyType);
-	
+
 				var index = search(cache, key);
 				if (index === -1) index = cache.length + 1;
+
+				// ensure that cache never grows beyond maximum bound
+				if (index >= cacheSize)
+					throw new global.Error("Maximum number of elements reached.");
 	
 				// use ECMAScript 5 freeze function to make objects immutable,
 				// therefore stored data can only be changed by re-setting it
