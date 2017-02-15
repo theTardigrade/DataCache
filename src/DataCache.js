@@ -114,7 +114,8 @@
 				};
 			})();
 	
-			if (options && options.keyType) setKeyType(options.keyType);
+			if (options && typeof options.keyType === STRING_TYPE)
+				setKeyType(options.keyType);
 	
 			/* public functions */
 	
