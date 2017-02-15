@@ -10,6 +10,8 @@
 
 	(function(global, module, D, M) {
 
+		"use strict";
+
 		// boolean below set to true if, and only if, code is running in Node.js
 		const IS_NODE = ( 
 				typeof module === OBJECT_TYPE
