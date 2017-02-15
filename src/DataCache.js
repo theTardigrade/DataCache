@@ -228,13 +228,16 @@
 			};
 
 			this.iterate = function(callback, options) {
-				let dataOnly = (options && options.dataOnly);
+				let boundThis = this,
+					curriedGet = (key) => boundThis.get(key, options);
 
 				for (let i = 0, l = cache.length; i < l; i += 2) {
-					if (typeof cache[i] === UNDEFINED_TYPE)
+					let key = cache[i];
+
+					if (typeof key !== keyType)
 						continue;
 
-					callback(this.get(cache[i], options));
+					callback(curriedGet(key));
 				}
 			};
 
