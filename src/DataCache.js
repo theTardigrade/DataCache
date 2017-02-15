@@ -31,12 +31,12 @@
 				now: (typeof D.now === FUNCTION_TYPE),
 				freeze: (typeof O.freeze === FUNCTION_TYPE)
 			},
-			keyTypeTest = function(key, type) {
+			keyTypeTest = (key, type) => {
 				if (typeof key !== type) {
 					throw new TypeError("Key must be a " + type + ".");
 				}
 			},
-			search = function(cacheArray, key) {
+			search = (cacheArray, key) => {
 				let lowerBound = 0,
 					upperBound = (cacheArray.length / 2) - 1,
 					midpoint;
@@ -53,7 +53,7 @@
 					}
 				}
 			}, // binary search (only considers even-numbered indices, i.e. keys)
-			sort = function(cacheArray) {
+			sort = (cacheArray) => {
 				let key, value;
 				for (let i = 0, l = cacheArray.length, j, k; i < l; i += 2) {
 					key = cacheArray[i];
@@ -81,7 +81,7 @@
 			});
 		*/
 		function DataCache(options) {
-			let cacheSize = (function() {
+			let cacheSize = (() => {
 					let s = (options) ? options.size : NaN,
 						r = (s !== NUMBER_TYPE && !isNaN(s)) ? parseInt(s, 10) : s;
 					r *= 2; // double to account for key-value consecutive pairs
@@ -91,7 +91,7 @@
 				cache = this._debugCache = [],
 				keyType = STRING_TYPE;
 
-			let setKeyType = (function() {
+			let setKeyType = (() => {
 					let errorMessage = "The only allowable key types are ";
 					ALLOWABLE_KEY_TYPES.forEach(function(v, i, a) {
 						let wrappedV = "\"" + v + "\"";
@@ -121,7 +121,7 @@
 
 			/* public functions */
 
-			this.get = function(key, dataOnly) {
+			this.get = (key, dataOnly) => {
 				keyTypeTest(key, keyType);
 
 				let index = search(cache, key);
@@ -131,7 +131,7 @@
 					: (dataOnly) ? cache[index].data : cache[index];
 			};
 
-			this.set = function(key, data) {
+			this.set = (key, data) => {
 				if (!keyType) setKeyType(typeof key); 
 				keyTypeTest(key, keyType);
 
@@ -161,10 +161,9 @@
 				return object;
 			};
 
-			this.unset = function(key) {
+			this.unset = (key) => {
 				let index = search(cache, key),
-					length = cache.length,
-					i;
+					length = cache.length;
 
 				if (index === -1) return false;
 
@@ -177,11 +176,13 @@
 					}
 				}
 
-				for (i = 0; i < 2; i++) cache.pop();
+				for (let i = 0; i < 2; i++)
+					cache.pop();
+
 				return !(sort(cache)); // true
 			};
 
-			this.iterate = function(callback, dataOnly) {
+			this.iterate = (callback, dataOnly) => {
 				for (let i = 0, l = cache.length; i < l; ++i) {
 					if (typeof cache[i] === UNDEFINED_TYPE)
 						continue;
@@ -190,7 +191,7 @@
 				}
 			};
 
-			this.clear = function() {
+			this.clear = () => {
 				return !!(cache = []); // true
 			};
 		};

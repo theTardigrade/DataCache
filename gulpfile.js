@@ -17,7 +17,10 @@ gulp.task("script", () => {
 
     return gulp.src(path.join(__dirname, "src", "DataCache.js"))
 		.pipe(plugins.babel({
-			"plugins": [ "transform-es2015-block-scoping" ]
+			"plugins": [
+				"arrow-functions",
+				"block-scoping"
+			].map((s) => ["transform", "es2015", s].join("-"))
 		}))
 		.pipe(plugins.uglify())
 		.pipe(plugins["optimize-js"]())
