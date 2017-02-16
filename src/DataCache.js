@@ -42,19 +42,21 @@
 			]),
 			search = (cacheArray, key) => {
 				let lowerBound = 0,
-					upperBound = (cacheArray.length / 2) - 1,
-					midpoint;
+					upperBound = cacheArray.length - 1;
 
 				for (;;) { // intentional infinite loop
-					midpoint = M.floor((lowerBound + upperBound) / 2) * 2;
-					if (cacheArray[midpoint] === key) return midpoint + 1;
-					if (lowerBound >= upperBound) return -1;
+					let midpoint = M.floor((lowerBound + upperBound) / 4) * 2; // only consider even-number indices
 
-					if (key < cacheArray[midpoint]) {
-						upperBound = midpoint - 1;
-					} else if (key > cacheArray[midpoint]) {
-						lowerBound = midpoint + 1;
-					}
+					if (cacheArray[midpoint] === key)
+						return midpoint + 1; // index of sucessive value
+
+					if (lowerBound >= upperBound)
+						return -1; // not found
+
+					if (key < cacheArray[midpoint])
+						upperBound = midpoint - 2;
+					else if (key > cacheArray[midpoint])
+						lowerBound = midpoint + 2;
 				}
 			}, // binary search (only considers even-numbered indices, i.e. keys)
 			sort = (cacheArray) => {
@@ -388,6 +390,18 @@
 					if (typeof newValue !== UNDEFINED_TYPE)
 						this.set(key, newValue);
 				}, options);
+			},
+
+			filter: function(callback, options) {
+				let filteredKeys = [];
+
+				this.iterate((key, value) => {
+					if (!callback(key, value))
+						filteredKeys.push(key);
+				}, options);
+
+				for (let i = 0, l = filteredKeys.length; i < l; ++i)
+					this.unset(filteredKeys[i]);
 			},
 
 			isFull: function() {
