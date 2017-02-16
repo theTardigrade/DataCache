@@ -215,18 +215,6 @@
 				}
 			};
 
-			this.map = function(callback, options) {
-				this.iterate((key, value) => {
-					let newValue = callback(key, value);
-
-					if (!options || !options.dataOnly)
-						newValue = newValue.data;
-
-					if (typeof newValue !== UNDEFINED_TYPE)
-						this.set(key, newValue);
-				}, options);
-			};
-
 			this.clear = () => {
 				return !!(cache = []); // true
 			};
@@ -389,6 +377,18 @@
 					return this.get(key, options);
 				}
 			})({ metadataOnly: true }),
+
+			map: function(callback, options) {
+				this.iterate((key, value) => {
+					let newValue = callback(key, value);
+
+					if (!options || !options.dataOnly)
+						newValue = newValue.data;
+
+					if (typeof newValue !== UNDEFINED_TYPE)
+						this.set(key, newValue);
+				}, options);
+			},
 
 			isFull: function() {
 				return (exists.defineProperty)
