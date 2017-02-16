@@ -219,7 +219,7 @@
 				return !!(cache = []); // true
 			};
 
-			/* initialize getters and setters, including fallback for browser without native support */
+			/* initialize getters and setters, including fallback for environments without native support */
 
 			let getFallbackDefinedPropertyName = (prefix, prop) => {
 					let i = 0,
@@ -388,6 +388,13 @@
 
 			isEmpty: function() {
 				return ((exists.defineProperty) ? this.size : this.getSize()) === 0;
+			},
+
+			// the following function can be used to determine whether to use old-style
+			// getters and settters (e.g. this.setCapacity(100)), if it returns false,
+			// or new-style (e.g. this.capacity = 100)
+			supportsNativeGettersAndSetters: () => {
+				return exists.defineProperty;
 			}
 
 		});
