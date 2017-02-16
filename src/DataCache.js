@@ -94,7 +94,7 @@
 			this.get = function(key, options) {
 				let value = null;
 
-				if (typeof key !== this.keyType)
+				if (typeof key !== getDefinedProperty("keyType"))
 					return value;
 
 				let index = search(cache, key);
@@ -130,15 +130,19 @@
 			};
 
 			this.has = function(key) {
-				return (typeof key === this.keyType && search(cache, key) > -1);
+				let keyType = getDefinedProperty("keyType");
+
+				return (typeof key === keyType && search(cache, key) > -1);
 			};
 
 			this.set = function(key, data) {
-				if (this.keyType !== STRING_TYPE)
-					this.keyType = (typeof key);
+				let keyType = getDefinedProperty("keyType");
 
-				if (typeof key !== this.keyType)
-					throw new TypeError("Key must be a " + this.keyType + ".");
+				if (typeof keyType !== STRING_TYPE)
+					setDefinedProperty("keyType", (keyType = (typeof key)));
+
+				if (typeof key !== keyType)
+					throw new TypeError("Key must be a " + keyType + ".");
 
 				let index = search(cache, key);
 
@@ -147,8 +151,8 @@
 
 				// when capacity is reached, start writing over oldest data
 				// use double value to account for consecutive key-value pairs
-				if (index >= this.capacity * 2)
-					index = this._oldestIndex;
+				if (index >= getDefinedProperty("capacity") * 2)
+					index = getDefinedProperty("_oldestIndex");
 
 				// use ECMAScript 5 freeze function to make objects immutable,
 				// therefore stored data can only be changed by re-setting it
@@ -172,7 +176,7 @@
 			};
 
 			this.unset = function(key) {
-				if (typeof key !== this.keyType)
+				if (typeof key !== getDefinedProperty("keyType"))
 					return false;
 
 				let index = search(cache, key),
@@ -197,13 +201,14 @@
 			};
 
 			this.iterate = function(callback, options) {
-				let boundThis = this,
+				let keyType = getDefinedProperty("keyType"),
+					boundThis = this,
 					curriedGet = (key) => boundThis.get(key, options);
 
 				for (let i = 0, l = cache.length; i < l; i += 2) {
 					let key = cache[i];
 
-					if (typeof key !== this.keyType)
+					if (typeof key !== keyType)
 						continue;
 
 					callback(key, curriedGet(key));
@@ -214,18 +219,43 @@
 				return !!(cache = []); // true
 			};
 
-			/* initialize getters and setters */
+			/* initialize getters and setters, including fallback for browser without native support */
 
-			if (!exists.defineProperty)
-				throw Error("Browser does not support use of getters and setters.");
+			let getFallbackDefinedPropertyName = (prefix, prop) => {
+					let i = 0,
+						u = (prop.charAt(i) === "_")
+							? (++i, "_")
+							: "";
+					u += prefix + prop.charAt(i).toUpperCase();
+					return u + prop.slice(i + 1);
+				},
+				definePropertyHere = (prop, options) => {
+					if (exists.defineProperty) {
+						O.defineProperty(this, prop, options);
+					} else {
+						let keys = [ "g", "s" ];
 
-			let definePropertyHere = (prop, options) => {
-					O.defineProperty(this, prop, options);
+						for (let i = 0, l = keys.length, k; i < l; ++i) {
+							k = keys[i] + "et";
+							if (typeof options[k] === FUNCTION_TYPE)
+								this[getFallbackDefinedPropertyName(k, prop)] = options[k];
+						}
+					}
+				},
+				getDefinedProperty = (prop) => {
+					return (exists.defineProperty)
+						? this[prop]
+						: this[getFallbackDefinedPropertyName("get", prop)]();
+				},
+				setDefinedProperty = (prop, value) => {
+					return (exists.defineProperty)
+						? (this[prop] = value)
+						: this[getFallbackDefinedPropertyName("set", prop)](value);
 				};
 
 			/* public getters and setters */
 
-			let privateKeyType = STRING_TYPE; // default
+			let privateKeyType = null;
 
 			definePropertyHere("keyType", {
 				get: (() => privateKeyType),
@@ -264,7 +294,7 @@
 			});
 
 			if (options && typeof options.keyType !== UNDEFINED_TYPE)
-				this.keyType = options.keyType;
+				setDefinedProperty("keyType", options.keyType);
 
 
 			definePropertyHere("size", {
@@ -302,9 +332,12 @@
 				}
 			});
 
-			this.capacity = (options && typeof options.capacity !== UNDEFINED_TYPE)
-				? options.capacity
-				: MAX_ARRAY_LENGTH;
+			setDefinedProperty(
+				"capacity",
+				(options && typeof options.capacity !== UNDEFINED_TYPE)
+					? options.capacity
+					: MAX_ARRAY_LENGTH
+			);
 
 			/* private getters and setters */
 
@@ -348,7 +381,13 @@
 			})({ metadataOnly: true }),
 
 			isFull: function() {
-				return this.size === this.capacity;
+				return (exists.defineProperty)
+					? this.size === this.capacity
+					: this.getSize() === this.getCapacity();
+			},
+
+			isEmpty: function() {
+				return ((exists.defineProperty) ? this.size : this.getSize()) === 0;
 			}
 
 		});
