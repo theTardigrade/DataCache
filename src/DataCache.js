@@ -262,17 +262,15 @@
 				set: (() => {
 					let errorMessage = "The only allowable key types are ";
 
-					ALLOWABLE_KEY_TYPES.forEach(function(v, i, a) {
-						let wrappedV = "\"" + v + "\"";
+					for (let i = 0, l = ALLOWABLE_KEY_TYPES.length, t; i < l; ++i) {
+						t = "\"" + ALLOWABLE_KEY_TYPES[i] + "\"";
 
-						if (i < a.length - 2) {
-							errorMessage += wrappedV + ", ";
-						} else if (i < a.length - 1) {
-							errorMessage += wrappedV;
-						} else {
-							errorMessage += " and " + wrappedV + ".";
-						}
-					});
+						errorMessage += (i < l - 2)
+							? t + ", "
+							: (i < l - 1)
+								? t
+								: " and " + t + ".";
+					}
 
 					return function(keyType) {
 						let isTypeAllowable = (() => {
