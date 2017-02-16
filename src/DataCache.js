@@ -31,7 +31,7 @@
 				let o = {};
 				for (let i = 0, l = data.length; i < l; ++i) {
 					let d = data[i];
-					o[d.key] = (typeof (O || d.object)[d.key] === (FUNCTION_TYPE || d.type));
+					o[d.key] = (typeof (d.object || O)[d.key] === (d.type || FUNCTION_TYPE));
 				}
 				return o;
 			})([
@@ -310,7 +310,7 @@
 					} else if (capacity < privateCapacity) {
 						let difference = privateCapacity - capacity;
 
-						for (let i = 0, l = Math.min(this.size, capacity); i < l; i += 2) {
+						for (let i = 0, l = M.min(this.size, capacity); i < l; i += 2) {
 							let index = this._getOldestIndex();
 							this.unset(cache[index - 1]);
 						}
