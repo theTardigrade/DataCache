@@ -9,8 +9,10 @@ const plugins = ((keys) => {
         return obj;
     })([
 		"babel",
+		"beautify",
 		"optimize-js",
 		"rename",
+		"remove-empty-lines",
 		"strip-comments",
 		"uglify",
     ]);
@@ -20,21 +22,31 @@ gulp.task("script", () => {
     let getSrc = () => {
 			return gulp.src(path.join(__dirname, "src", "DataCache.js"))
 				.pipe(plugins.babel({
-    	    		"plugins": [
-                		"arrow-functions",
-                		"block-scoping"
-            		].map((s) => ["transform", "es2015", s].join("-"))
-        		}));
+					plugins: [
+							"arrow-functions",
+							"block-scoping"
+						].map((s) => ["transform", "es2015", s].join("-")),
+					retainLines: true
+			}));
 		};
 
+	// minified
 	getSrc()
 		.pipe(plugins.uglify())
 		.pipe(plugins["optimize-js"]())
 		.pipe(plugins.rename("DataCache.min.js"))
         .pipe(gulp.dest(path.join(__dirname, "build")));
 
+	// non-minified, but commentless
 	getSrc()
 		.pipe(plugins["strip-comments"]())
+		.pipe(plugins["remove-empty-lines"]())
+		.pipe(plugins.beautify({
+			eol: "\n",
+			indent_with_tabs: true,
+			operator_position: "after-newline",
+			wrap_line_length: 96
+		}))
 		.pipe(plugins["optimize-js"]())
 		.pipe(gulp.dest(path.join(__dirname, "build")));
 
