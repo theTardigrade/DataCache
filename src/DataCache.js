@@ -27,6 +27,8 @@
 		// used to ensure that underlying array does not exceed maximum allowed (i.e. 4.29bn)
 		const MAX_ARRAY_LENGTH = ((1 << 16) * (1 << 16)) - 1;
 
+		// object where keys are names of properties defined on global objects
+		// and values are booleans showing whether they're available or not
 		let exists = ((data) => {
 				let o = {};
 				for (let i = 0, l = data.length; i < l; ++i) {
@@ -39,13 +41,18 @@
 				{ key: "defineProperty" },
 				{ key: "freeze" },
 				{ key: "now", object: D }
-			]),
-			search = (cacheArray, key) => {
+			]);
+
+		// binary search, considering only even-numbered indices
+		// to account for the fact that in the array used to hold cache data
+		// odd-numbered indices contain keys and the successive odd-numbered
+		// index contains a corresponding value
+		let search = (cacheArray, key) => {
 				let lowerBound = 0,
 					upperBound = cacheArray.length - 1;
 
 				for (;;) { // intentional infinite loop
-					let midpoint = M.floor((lowerBound + upperBound) / 4) * 2; // only consider even-number indices
+					let midpoint = M.floor((lowerBound + upperBound) / 4) * 2;
 
 					if (cacheArray[midpoint] === key)
 						return midpoint + 1; // index of sucessive value
@@ -58,8 +65,12 @@
 					else if (key > cacheArray[midpoint])
 						lowerBound = midpoint + 2;
 				}
-			}, // binary search (only considers even-numbered indices, i.e. keys)
-			sort = (cacheArray) => {
+			};
+
+		// insertion sort, where odd-numbered indices are sorted based on the
+		// value of the previous even-numbered index, i.e. two indices are
+		// swapped per iteration of the inner loop
+		let sort = (cacheArray) => {
 				for (let i = 0, l = cacheArray.length, j, k; i < l; i += 2) {
 					let key = cacheArray[i],
 						value = cacheArray[i + 1];
@@ -75,9 +86,7 @@
 					cacheArray[j + 2] = key;
 					cacheArray[j + 3] = value;
 				}
-			}; // insertion sort
-			// (used because array will always be almost sorted,
-			//  so relatively inexpensive)
+			};
 
 		/*
 			example:
