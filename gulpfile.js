@@ -10,21 +10,33 @@ const plugins = ((keys) => {
     })([
 		"babel",
 		"optimize-js",
+		"rename",
+		"strip-comments",
 		"uglify",
     ]);
 
 gulp.task("script", () => {
 
-    return gulp.src(path.join(__dirname, "src", "DataCache.js"))
-		.pipe(plugins.babel({
-			"plugins": [
-				"arrow-functions",
-				"block-scoping"
-			].map((s) => ["transform", "es2015", s].join("-"))
-		}))
+    let getSrc = () => {
+			return gulp.src(path.join(__dirname, "src", "DataCache.js"))
+				.pipe(plugins.babel({
+    	    		"plugins": [
+                		"arrow-functions",
+                		"block-scoping"
+            		].map((s) => ["transform", "es2015", s].join("-"))
+        		}));
+		};
+
+	getSrc()
 		.pipe(plugins.uglify())
 		.pipe(plugins["optimize-js"]())
+		.pipe(plugins.rename("DataCache.min.js"))
         .pipe(gulp.dest(path.join(__dirname, "build")));
+
+	getSrc()
+		.pipe(plugins["strip-comments"]())
+		.pipe(plugins["optimize-js"]())
+		.pipe(gulp.dest(path.join(__dirname, "build")));
 
 });
 
