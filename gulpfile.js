@@ -24,7 +24,7 @@ gulp.task("script", () => {
     let getSrc = () => {
 			return gulp.src(path.join(__dirname, "src", "DataCache.js"))
 				.pipe(plugins.wrap({
-					src: path.join(__dirname, "src", "iife.tmpl.js")
+					src: path.join(__dirname, "src", "IIFE.tmpl.js")
 				}))
 				.pipe(plugins.babel({
 					plugins: [
