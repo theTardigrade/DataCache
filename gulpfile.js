@@ -1,5 +1,6 @@
 const gulp = require("gulp"),
-	path = require("path");
+	path = require("path"),
+	fs = require("fs");
 
 const plugins = ((keys) => {
         var obj = {};
@@ -15,12 +16,16 @@ const plugins = ((keys) => {
 		"remove-empty-lines",
 		"strip-comments",
 		"uglify",
+		"wrap"
     ]);
 
 gulp.task("script", () => {
 
     let getSrc = () => {
 			return gulp.src(path.join(__dirname, "src", "DataCache.js"))
+				.pipe(plugins.wrap({
+					src: path.join(__dirname, "src", "iife.tmpl.js")
+				}))
 				.pipe(plugins.babel({
 					plugins: [
 							"arrow-functions",
