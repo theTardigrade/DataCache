@@ -14,7 +14,7 @@
 			&& !isNaN(parseFloat(process.versions.node, 10));
 		var ALLOWABLE_KEY_TYPES = [STRING_TYPE, NUMBER_TYPE];
 		var MAX_ARRAY_LENGTH = (1 << 16) * (1 << 16) - 1,
-			MAX_CAPACITY = M.floor(MAX_ARRAY_LENGTH) / 2;
+			MAX_CAPACITY = M.floor(MAX_ARRAY_LENGTH / 2);
 		var exists = (function(data) {
 			var o = {};
 			for (var i = 0, l = data.length; i < l; ++i) {

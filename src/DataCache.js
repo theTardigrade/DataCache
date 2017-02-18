@@ -12,7 +12,7 @@ const ALLOWABLE_KEY_TYPES = [STRING_TYPE, NUMBER_TYPE/*, "symbol"*/];
 
 // used to ensure that underlying array does not exceed maximum allowed (i.e. 4.29bn)
 const MAX_ARRAY_LENGTH = ((1 << 16) * (1 << 16)) - 1,
-	MAX_CAPACITY = M.floor(MAX_ARRAY_LENGTH) / 2;
+	MAX_CAPACITY = M.floor(MAX_ARRAY_LENGTH / 2);
 
 // object where keys are names of properties defined on global objects
 // and values are booleans showing whether they're available or not
