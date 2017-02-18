@@ -25,7 +25,8 @@
 		const ALLOWABLE_KEY_TYPES = [STRING_TYPE, NUMBER_TYPE/*, "symbol"*/];
 
 		// used to ensure that underlying array does not exceed maximum allowed (i.e. 4.29bn)
-		const MAX_ARRAY_LENGTH = ((1 << 16) * (1 << 16)) - 1;
+		const MAX_ARRAY_LENGTH = ((1 << 16) * (1 << 16)) - 1,
+			MAX_CAPACITY = M.floor(MAX_ARRAY_LENGTH) / 2;
 
 		// object where keys are names of properties defined on global objects
 		// and values are booleans showing whether they're available or not
@@ -331,7 +332,7 @@
 							? parseInt(capacity, 10)
 							: capacity;
 
-					value = M.min(value, MAX_ARRAY_LENGTH);
+					value = M.min(value, MAX_CAPACITY);
 
 					if (isNaN(value))
 						throw new TypeError("Suggested capacity cannot be parsed.");
@@ -345,7 +346,7 @@
 				"capacity",
 				(options && typeof options.capacity !== UNDEFINED_TYPE)
 					? options.capacity
-					: MAX_ARRAY_LENGTH
+					: MAX_CAPACITY
 			);
 
 			/* private getters and setters */
@@ -353,7 +354,7 @@
 			definePropertyHere("_oldestIndex", {
 				get: () => {
 					let index = 1,
-						updated = N.MAX_VALUE || M.pow(2, 48);
+						updated = N.MAX_VALUE || global.Infinity;
 
 					for (let i = index, l = cache.length; i < l; i += 2) {
 						if (cache[i].updated < updated) {

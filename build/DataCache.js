@@ -13,7 +13,8 @@
 			&& typeof process.versions == OBJECT_TYPE
 			&& !isNaN(parseFloat(process.versions.node, 10));
 		var ALLOWABLE_KEY_TYPES = [STRING_TYPE, NUMBER_TYPE];
-		var MAX_ARRAY_LENGTH = (1 << 16) * (1 << 16) - 1;
+		var MAX_ARRAY_LENGTH = (1 << 16) * (1 << 16) - 1,
+			MAX_CAPACITY = M.floor(MAX_ARRAY_LENGTH) / 2;
 		var exists = (function(data) {
 			var o = {};
 			for (var i = 0, l = data.length; i < l; ++i) {
@@ -249,7 +250,7 @@
 					var value = capacity !== NUMBER_TYPE && !isNaN(capacity)
 						? parseInt(capacity, 10)
 						: capacity;
-					value = M.min(value, MAX_ARRAY_LENGTH);
+					value = M.min(value, MAX_CAPACITY);
 					if (isNaN(value))
 						throw new TypeError("Suggested capacity cannot be parsed.");
 					privateCapacity = M.max(value, 0);
@@ -260,11 +261,11 @@
 				"capacity",
 				options && typeof options.capacity !== UNDEFINED_TYPE
 				? options.capacity
-				: MAX_ARRAY_LENGTH);
+				: MAX_CAPACITY);
 			definePropertyHere("_oldestIndex", {
 				get: function() {
 					var index = 1,
-						updated = N.MAX_VALUE || M.pow(2, 48);
+						updated = N.MAX_VALUE || global.Infinity;
 					for (var i = index, l = cache.length; i < l; i += 2) {
 						if (cache[i].updated < updated) {
 							updated = cache[i].updated;
