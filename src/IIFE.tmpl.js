@@ -8,7 +8,7 @@
         NUMBER_TYPE = "number",
         UNDEFINED_TYPE = "undefined";
 
-    ((global, module, process, Error, TypeError, D, M, O, A, N) => {
+    ((global, module, define, Error, TypeError, D, M, O, A, N) => {
 
         "use strict";
 
@@ -21,7 +21,7 @@
                 ? this.global
                 : this,
         this.module,
-		this.process,
+		this.define,
         Error,
         TypeError,
         Date,

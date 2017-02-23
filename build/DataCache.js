@@ -6,16 +6,9 @@
 		NUMBER_TYPE = "number",
 		UNDEFINED_TYPE = "undefined";
 
-	(function(global, module, process, Error, TypeError, D, M, O, A, N) {
+	(function(global, module, define, Error, TypeError, D, M, O, A, N) {
 
 		"use strict";
-
-		var IS_NODE =
-			typeof module === OBJECT_TYPE
-			&& typeof module.exports === OBJECT_TYPE
-			&& typeof process === OBJECT_TYPE
-			&& typeof process.versions === OBJECT_TYPE
-			&& !isNaN(parseFloat(process.versions.node, 10));
 
 		var EXISTS = (function(data) {
 			var o = {};
@@ -151,15 +144,12 @@
 					value = cache[index];
 
 					if (options) {
-						var setOptionCount = 0;
-
-						for (var _i = 0, _l = onlyOptionNames.length; _i < _l; ++_i) {
+						for (var _i = 0, setOnlyOptionCount = 0, _l = onlyOptionNames.length; _i < _l; ++_i) {
 							if (options[onlyOptionNames[_i]]) {
-								if (setOptionCount)
+								if (setOnlyOptionCount++)
 									throw new Error("The " + arrayToHumanString(onlyOptionNames) +
 										" options are mutually contradictory.");
 								value = value[onlyPropertyNames[_i]];
-								++setOptionCount;
 							}
 						}
 					}
@@ -446,8 +436,10 @@
 			}
 		});
 
-		if (IS_NODE) {
+		if (typeof module === OBJECT_TYPE && typeof module.exports === OBJECT_TYPE) {
 			module.exports = DataCache;
+		} else if (typeof define === FUNCTION_TYPE && define.amd) {
+			define(["DataCache"], [], DataCache);
 		} else {
 			global.DataCache = DataCache;
 		}
@@ -459,7 +451,7 @@
 		? this.global
 		: this,
 		this.module,
-		this.process,
+		this.define,
 		Error,
 		TypeError,
 		Date,

@@ -1,12 +1,3 @@
-// boolean below set to true if, and only if, code is running in Node.js
-const IS_NODE = (
-		typeof module === OBJECT_TYPE
-		&& typeof module.exports === OBJECT_TYPE
-		&& typeof process === OBJECT_TYPE
-		&& typeof process.versions === OBJECT_TYPE
-		&& !isNaN(parseFloat(process.versions.node, 10))
-	);
-
 // object where keys are names of properties defined on global objects
 // and values are booleans showing whether they're available or not
 const EXISTS = ((data) => {
@@ -144,14 +135,11 @@ function DataCache(options) {
 			value = cache[index];
 
 			if (options) {
-				let setOptionCount = 0;
-
-				for (let i = 0, l = onlyOptionNames.length; i < l; ++i) {
+				for (let i = 0, setOnlyOptionCount = 0, l = onlyOptionNames.length; i < l; ++i) {
 					if (options[onlyOptionNames[i]]) {
-						if (setOptionCount)
+						if (setOnlyOptionCount++)
 							throw new Error(`The ${ arrayToHumanString(onlyOptionNames) } options are mutually contradictory.`);
 						value = value[onlyPropertyNames[i]];
-						++setOptionCount;
 					}
 				}
 			}
@@ -434,9 +422,14 @@ function DataCache(options) {
 
 });
 
-if (IS_NODE) {
+if (typeof module === OBJECT_TYPE && typeof module.exports === OBJECT_TYPE) {
+	// CommonJS / Node.js
 	module.exports = DataCache;
+} else if (typeof define === FUNCTION_TYPE && define.amd) {
+	// AMD
+	define([ "DataCache" ], [], DataCache);
 } else {
+	// all other environments
 	global.DataCache = DataCache;
 }
 
