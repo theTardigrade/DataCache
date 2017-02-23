@@ -46,7 +46,7 @@ gulp.task("script", () => {
 	// non-minified, but commentless
 	getSrc()
 		.pipe(plugins["strip-comments"]())
-		.pipe(plugins["replace"](/\n{2,}/g, "\n\n"))
+		.pipe(plugins["replace"](/\n{3,}/g, "\n\n"))
 		.pipe(plugins.beautify({
 			eol: "\n",
 			indent_with_tabs: true,
