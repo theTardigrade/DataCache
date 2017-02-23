@@ -29,7 +29,8 @@ gulp.task("script", () => {
 				.pipe(plugins.babel({
 					plugins: [
 							"arrow-functions",
-							"block-scoping"
+							"block-scoping",
+							"template-literals"
 						].map((s) => ["transform", "es2015", s].join("-")),
 					retainLines: true
 			}));

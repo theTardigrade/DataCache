@@ -104,43 +104,42 @@ function DataCache(options) {
 
 	/* public functions */
 
-	this.get = function(key, options) {
-		let value = null;
+	this.get = (() => {
+		let onlyPropertyNames = [ "data", "metadata" ],
+			onlyOptionNames = new A(onlyPropertyNames.length);
 
-		if (typeof key !== privateKeyType)
-			return value;
+		for (let i = 0, l = onlyOptionNames.length; i < l; ++i)
+			onlyOptionNames[i] = onlyPropertyNames[i] + "Only";
 
-		let index = search(cache, key);
+		return function(key, options) {
+			let value = null;
 
-		if (index === -1)
-			return value;
+			if (typeof key !== privateKeyType)
+				return value;
 
-		value = cache[index];
+			let index = search(cache, key);
 
-		if (options) {
-			let optionCount = 0;
+			if (index === -1)
+				return value;
 
-			if (options.metadataOnly) {
-				let metadata = {};
-				++optionCount;
+			value = cache[index];
 
-				for (let vKey in value)
-					if (vKey !== "data")
-						metadata[vKey] = value[vKey];
+			if (options) {
+				let setOptionCount = 0;
 
-				return metadata;
+				for (let i = 0, l = onlyOptionNames.length; i < l; ++i) {
+					if (options[onlyOptionNames[i]]) {
+						if (setOptionCount)
+							throw new Error(`The "${ onlyOptionNames[0] }" and "${ onlyOptionNames[1] }" options are mutually contradictory.`);
+						value = value[onlyPropertyNames[i]];
+						++setOptionCount;
+					}
+				}
 			}
 
-			if (options.dataOnly) {
-				if (optionCount)
-					throw new Error("The \"dataOnly\" and \"metadataOnly\" options are mutually contradictory.");
-
-				value = value.data;
-			}
-		}
-
-		return value;
-	};
+			return value;
+		};
+	})();
 
 	this.has = function(key) {
 		return (typeof key === privateKeyType && search(cache, key) > -1);
@@ -151,7 +150,7 @@ function DataCache(options) {
 			setDefinedProperty("keyType", (typeof key));
 
 		if (typeof key !== privateKeyType)
-			throw new TypeError("Key must be a " + keyType + ".");
+			throw new TypeError("Key must be a " + privateKeyType + ".");
 
 		let index = search(cache, key);
 
@@ -169,13 +168,16 @@ function DataCache(options) {
 			O.freeze(data);
 
 		let object = {
-				data: data,
-				updated: (EXISTS.now) ? D.now() : new D().getTime()
-			};
+				data: data
+			},
+			metadata = object.metadata = {
+				updated: (EXISTS.now) ? D.now() : (new D()).getTime()
+			},
+			cachedMetadata = (cache[index] && cache[index].metadata && typeof cache[index].metadata.created === NUMBER_TYPE)
+				? cache[index].metadata
+				: metadata;
 
-		object.created = (cache[index] && cache[index].created)
-			? cache[index].created
-			: object.updated;
+		metadata.created = cachedMetadata.created || cachedMetadata.updated;
 
 		cache[index - 1] = key;
 		cache[index] = object;
@@ -346,8 +348,8 @@ function DataCache(options) {
 				updated = N.MAX_VALUE || global.Infinity;
 
 			for (let i = index, l = cache.length; i < l; i += 2) {
-				if (cache[i].updated < updated) {
-					updated = cache[i].updated;
+				if (cache[i].metadata.updated < updated) {
+					updated = cache[i].metadata.updated;
 					index = i;
 				}
 			}

@@ -88,34 +88,35 @@
 		function DataCache(options) {
 			var _this = this;
 			var cache = this._debugCache = [];
-			this.get = function(key, options) {
-				var value = null;
-				if (typeof key !== privateKeyType)
-					return value;
-				var index = search(cache, key);
-				if (index === -1)
-					return value;
-				value = cache[index];
-				if (options) {
-					var optionCount = 0;
-					if (options.metadataOnly) {
-						var metadata = {};
-						++optionCount;
-						for (var vKey in value) {
-							if (vKey !== "data")
-								metadata[vKey] = value[vKey];
-						}
-						return metadata;
-					}
-					if (options.dataOnly) {
-						if (optionCount)
-							throw new Error(
-								"The \"dataOnly\" and \"metadataOnly\" options are mutually contradictory.");
-						value = value.data;
-					}
+			this.get = (function() {
+				var onlyPropertyNames = ["data", "metadata"],
+					onlyOptionNames = new A(onlyPropertyNames.length);
+				for (var i = 0, l = onlyOptionNames.length; i < l; ++i) {
+					onlyOptionNames[i] = onlyPropertyNames[i] + "Only";
 				}
-				return value;
-			};
+				return function(key, options) {
+					var value = null;
+					if (typeof key !== privateKeyType)
+						return value;
+					var index = search(cache, key);
+					if (index === -1)
+						return value;
+					value = cache[index];
+					if (options) {
+						var setOptionCount = 0;
+						for (var _i = 0, _l = onlyOptionNames.length; _i < _l; ++_i) {
+							if (options[onlyOptionNames[_i]]) {
+								if (setOptionCount)
+									throw new Error("The \"" + onlyOptionNames[0] + "\" and \"" + onlyOptionNames[1] +
+										"\" options are mutually contradictory.");
+								value = value[onlyPropertyNames[_i]];
+								++setOptionCount;
+							}
+						}
+					}
+					return value;
+				};
+			})();
 			this.has = function(key) {
 				return typeof key === privateKeyType && search(cache, key) > -1;
 			};
@@ -123,7 +124,7 @@
 				if (typeof privateKeyType !== STRING_TYPE)
 					setDefinedProperty("keyType", typeof key);
 				if (typeof key !== privateKeyType)
-					throw new TypeError("Key must be a " + keyType + ".");
+					throw new TypeError("Key must be a " + privateKeyType + ".");
 				var index = search(cache, key);
 				if (index === -1)
 					index = cache.length + 1;
@@ -132,12 +133,16 @@
 				if (typeof data === OBJECT_TYPE && EXISTS.freeze)
 					O.freeze(data);
 				var object = {
-					data: data,
-					updated: EXISTS.now ? D.now() : new D().getTime()
-				};
-				object.created = cache[index] && cache[index].created
-					? cache[index].created
-					: object.updated;
+						data: data
+					},
+					metadata = object.metadata = {
+						updated: EXISTS.now ? D.now() : new D().getTime()
+					},
+					cachedMetadata = cache[index] && cache[index].metadata && typeof cache[index].metadata.created
+					=== NUMBER_TYPE
+					? cache[index].metadata
+					: metadata;
+				metadata.created = cachedMetadata.created || cachedMetadata.updated;
 				cache[index - 1] = key;
 				cache[index] = object;
 				sort(cache);
@@ -157,7 +162,7 @@
 						cache[length - i - 1] = temp;
 					}
 				}
-				for (var _i = 0; _i < 2; ++_i) {
+				for (var _i2 = 0; _i2 < 2; ++_i2) {
 					cache.pop();
 				}
 				return !sort(cache);
@@ -274,8 +279,8 @@
 					var index = 1,
 						updated = N.MAX_VALUE || global.Infinity;
 					for (var i = index, l = cache.length; i < l; i += 2) {
-						if (cache[i].updated < updated) {
-							updated = cache[i].updated;
+						if (cache[i].metadata.updated < updated) {
+							updated = cache[i].metadata.updated;
 							index = i;
 						}
 					}
