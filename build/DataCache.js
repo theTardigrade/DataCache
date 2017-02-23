@@ -35,6 +35,10 @@
 			{
 				key: "includes",
 				object: A.prototype
+			},
+			{
+				key: "isArray",
+				object: A
 			}
 		]);
 		var ALLOWABLE_KEY_TYPES = [
@@ -84,6 +88,21 @@
 				cacheArray[j + 3] = value;
 			}
 		};
+		var arrayToHumanString = function(array) {
+			var str = "";
+			if (EXISTS.isArray ? A.isArray(array) : O.prototype.toString.call(array) ===
+				"[object Array]") {
+				for (var i = 0, l = array.length, tmp; i < l; ++i) {
+					tmp = "\"" + array[i] + "\"";
+					str += i < l - 2
+						? tmp + ", "
+						: i < l - 1
+						? tmp
+						: " and " + tmp;
+				}
+			}
+			return str;
+		};
 
 		function DataCache(options) {
 			var _this = this;
@@ -107,8 +126,8 @@
 						for (var _i = 0, _l = onlyOptionNames.length; _i < _l; ++_i) {
 							if (options[onlyOptionNames[_i]]) {
 								if (setOptionCount)
-									throw new Error("The \"" + onlyOptionNames[0] + "\" and \"" + onlyOptionNames[1] +
-										"\" options are mutually contradictory.");
+									throw new Error("The " + arrayToHumanString(onlyOptionNames) +
+										" options are mutually contradictory.");
 								value = value[onlyPropertyNames[_i]];
 								++setOptionCount;
 							}
@@ -218,15 +237,8 @@
 					return privateKeyType;
 				},
 				set: (function() {
-					var errorMessage = "The only allowable key types are ";
-					for (var i = 0, l = ALLOWABLE_KEY_TYPES.length, t; i < l; ++i) {
-						t = "\"" + ALLOWABLE_KEY_TYPES[i] + "\"";
-						errorMessage += i < l - 2
-							? t + ", "
-							: i < l - 1
-							? t
-							: " and " + t + ".";
-					}
+					var errorMessage = "The only allowable key types are "
+						+ arrayToHumanString(ALLOWABLE_KEY_TYPES) + ".";
 					return function(keyType) {
 						if (keyType === privateKeyType)
 							return;

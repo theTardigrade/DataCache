@@ -21,7 +21,8 @@ const EXISTS = ((data) => {
 		{ key: "defineProperty" },
 		{ key: "freeze" },
 		{ key: "now", object: D },
-		{ key: "includes", object: A.prototype }
+		{ key: "includes", object: A.prototype },
+		{ key: "isArray", object: A }
 	]);
 
 // cache key can be set to accept one of the following types
@@ -90,6 +91,24 @@ let sort = (cacheArray) => {
 		}
 	};
 
+// return the contents of an array in English human-readable form
+let arrayToHumanString = (array) => {
+		let str = "";
+
+		if ((EXISTS.isArray) ? A.isArray(array) : O.prototype.toString.call(array) === "[object Array]") {
+			for (let i = 0, l = array.length, tmp; i < l; ++i) {
+				tmp = "\"" + array[i] + "\"";
+				str += (i < l - 2)
+					? tmp + ", "
+					: (i < l - 1)
+						? tmp
+						: " and " + tmp;
+			}
+		}
+
+		return str;
+	};
+
 /*
 	example:
 
@@ -130,7 +149,7 @@ function DataCache(options) {
 				for (let i = 0, l = onlyOptionNames.length; i < l; ++i) {
 					if (options[onlyOptionNames[i]]) {
 						if (setOptionCount)
-							throw new Error(`The "${ onlyOptionNames[0] }" and "${ onlyOptionNames[1] }" options are mutually contradictory.`);
+							throw new Error(`The ${ arrayToHumanString(onlyOptionNames) } options are mutually contradictory.`);
 						value = value[onlyPropertyNames[i]];
 						++setOptionCount;
 					}
@@ -270,17 +289,8 @@ function DataCache(options) {
 	definePropertyHere("keyType", {
 		get: (() => privateKeyType),
 		set: (() => {
-			let errorMessage = "The only allowable key types are ";
-
-			for (let i = 0, l = ALLOWABLE_KEY_TYPES.length, t; i < l; ++i) {
-				t = "\"" + ALLOWABLE_KEY_TYPES[i] + "\"";
-
-				errorMessage += (i < l - 2)
-					? t + ", "
-					: (i < l - 1)
-						? t
-						: " and " + t + ".";
-			}
+			let errorMessage = "The only allowable key types are "
+					+ arrayToHumanString(ALLOWABLE_KEY_TYPES) + ".";
 
 			return function(keyType) {
 				if (keyType === privateKeyType)
