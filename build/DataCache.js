@@ -129,7 +129,7 @@
 		};
 
 		function DataCache(options) {
-			var _this = this;
+			var _this2 = this;
 			var cache = this._debugCache = [];
 
 			this.get = (function() {
@@ -238,10 +238,10 @@
 			};
 
 			this.iterate = function(callback, options) {
-				var boundThis = this,
-					curriedGet = function(key) {
-						return boundThis.get(key, options);
-					};
+				var _this = this;
+				var curriedGet = function(key) {
+					return _this.get(key, options);
+				};
 
 				for (var i = 0, l = cache.length; i < l; i += 2) {
 					var key = cache[i];
@@ -267,26 +267,26 @@
 				},
 				definePropertyHere = function(prop, options) {
 					if (EXISTS.defineProperty) {
-						O.defineProperty(_this, prop, options);
+						O.defineProperty(_this2, prop, options);
 					} else {
 						var keys = ["g", "s"];
 
 						for (var i = 0, l = keys.length, k; i < l; ++i) {
 							k = keys[i] + "et";
 							if (typeof options[k] === FUNCTION_TYPE)
-								_this[getFallbackDefinedPropertyName(k, prop)] = options[k];
+								_this2[getFallbackDefinedPropertyName(k, prop)] = options[k];
 						}
 					}
 				},
 				getDefinedProperty = function(prop) {
 					return EXISTS.defineProperty
-						? _this[prop]
-						: _this[getFallbackDefinedPropertyName("get", prop)]();
+						? _this2[prop]
+						: _this2[getFallbackDefinedPropertyName("get", prop)]();
 				},
 				setDefinedProperty = function(prop, value) {
 					return EXISTS.defineProperty
-						? _this[prop] = value
-						: _this[getFallbackDefinedPropertyName("set", prop)](value);
+						? _this2[prop] = value
+						: _this2[getFallbackDefinedPropertyName("set", prop)](value);
 				};
 
 			var privateKeyType = null;
@@ -333,9 +333,9 @@
 					} else if (capacity < privateCapacity) {
 						var difference = privateCapacity - capacity;
 
-						for (var i = 0, l = M.min(_this.size, capacity); i < l; i += 2) {
-							var index = _this._getOldestIndex();
-							_this.unset(cache[index - 1]);
+						for (var i = 0, l = M.min(_this2.size, capacity); i < l; i += 2) {
+							var index = _this2._getOldestIndex();
+							_this2.unset(cache[index - 1]);
 						}
 					}
 
@@ -406,7 +406,7 @@
 			}),
 
 			map: function(callback, options) {
-				var _this2 = this;
+				var _this3 = this;
 				this.iterate((function(key, value) {
 					var newValue = callback(key, value);
 
@@ -414,15 +414,15 @@
 						newValue = newValue.data;
 
 					if (typeof newValue !== UNDEFINED_TYPE)
-						_this2.set(key, newValue);
+						_this3.set(key, newValue);
 				}), options);
 			},
 
 			filter: function(callback, options) {
-				var _this3 = this;
+				var _this4 = this;
 				this.iterate((function(key, value) {
 					if (!callback(key, value))
-						_this3.unset(key);
+						_this4.unset(key);
 				}), options);
 			},
 

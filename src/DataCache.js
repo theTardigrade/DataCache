@@ -231,8 +231,7 @@ function DataCache(options) {
 	};
 
 	this.iterate = function(callback, options) {
-		let boundThis = this,
-			curriedGet = (key) => boundThis.get(key, options);
+		let curriedGet = (key) => this.get(key, options);
 
 		for (let i = 0, l = cache.length; i < l; i += 2) {
 			let key = cache[i];
