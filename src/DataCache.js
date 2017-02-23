@@ -100,6 +100,17 @@ let arrayToHumanString = (array) => {
 		return str;
 	};
 
+// recursively freeze an object, to make it and all of its subobjects
+// immutable (i.e. read-only)
+let deepFreeze = (object) => {
+		for (let key in object)
+			if (typeof object === OBJECT_TYPE)
+				deepFreeze(object[key]);
+
+		if (!O.isFrozen(object))
+			O.freeze(object);
+	};
+
 /*
 	example:
 
@@ -185,8 +196,7 @@ function DataCache(options) {
 		// therefore stored data and metadata can only be changed by
 		// re-setting it
 		if (EXISTS.freeze)
-			for (let key in object)
-				O.freeze(object[key]);
+			deepFreeze(object);
 
 		cache[index - 1] = key;
 		cache[index] = object;

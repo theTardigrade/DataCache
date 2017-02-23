@@ -118,6 +118,16 @@
 			return str;
 		};
 
+		var deepFreeze = function(object) {
+			for (var key in object) {
+				if (typeof object === OBJECT_TYPE)
+					deepFreeze(object[key]);
+			}
+
+			if (!O.isFrozen(object))
+				O.freeze(object);
+		};
+
 		function DataCache(options) {
 			var _this = this;
 			var cache = this._debugCache = [];
@@ -193,9 +203,7 @@
 				metadata.created = cachedMetadata.created || cachedMetadata.updated;
 
 				if (EXISTS.freeze)
-					for (var _key in object) {
-						O.freeze(object[_key]);
-					}
+					deepFreeze(object);
 
 				cache[index - 1] = key;
 				cache[index] = object;
