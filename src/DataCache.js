@@ -291,7 +291,7 @@ function DataCache(options) {
 			let errorMessage = "The only allowable key types are "
 					+ arrayToHumanString(ALLOWABLE_KEY_TYPES) + ".";
 
-			return function(keyType) {
+			return (keyType) => {
 				if (keyType === privateKeyType)
 					return;
 
@@ -316,30 +316,28 @@ function DataCache(options) {
 
 	definePropertyHere("capacity", {
 		get: (() => privateCapacity),
-		set: (capacity) => {
-			if (typeof capacity !== NUMBER_TYPE || capacity < 0 || capacity === privateCapacity) {
-				return false;
-			} else if (capacity < privateCapacity) {
-				let difference = privateCapacity - capacity;
+		set: (() => {
+			let injunctionErrorMaker = (x, e) => new e("Capacity must be " + x + ".");
 
-				for (let i = 0, l = M.min(this.size, capacity); i < l; i += 2) {
-					let index = getDefinedProperty("_oldestIndex");
-					this.unset(cache[index - 1]);
+			return (capacity) => {
+				if (capacity === privateCapacity) {
+					return; // do nothing
+				} else if (typeof capacity !== NUMBER_TYPE || isNaN(capacity)) {
+					throw injunctionErrorMaker("a number (excluding NaN)", TypeError);
+				} else if (capacity < 0) {
+					throw injunctionErrorMaker("non-negative", RangeError);
+				} else if (capacity < privateCapacity) {
+					let difference = M.min(privateCapacity, this.size) - capacity;
+
+					for (let i = 0; i < difference; ++i) {
+						let index = getDefinedProperty("_oldestIndex");
+						this.unset(cache[index - 1]);
+					}
 				}
-			}
 
-			let value = (capacity !== NUMBER_TYPE && !isNaN(capacity))
-					? parseInt(capacity, 10)
-					: capacity;
-
-			value = M.min(value, MAX_CAPACITY);
-
-			if (isNaN(value))
-				throw new TypeError("Suggested capacity cannot be parsed.");
-
-			privateCapacity = M.max(value, 0); // disregard negatives;
-			return true;
-		}
+				privateCapacity = M.min(M.round(capacity), MAX_CAPACITY);
+			};
+		})()
 	});
 
 	setDefinedProperty(

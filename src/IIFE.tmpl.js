@@ -8,7 +8,7 @@
         NUMBER_TYPE = "number",
         UNDEFINED_TYPE = "undefined";
 
-    ((global, module, define, Error, TypeError, D, M, O, A, N) => {
+    ((global, module, define, Error, TypeError, RangeError, D, M, O, A, N) => {
 
         "use strict";
 
@@ -24,6 +24,7 @@
 		this.define,
         Error,
         TypeError,
+		RangeError,
         Date,
         Math,
         Object,

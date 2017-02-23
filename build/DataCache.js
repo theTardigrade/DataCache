@@ -6,7 +6,7 @@
 		NUMBER_TYPE = "number",
 		UNDEFINED_TYPE = "undefined";
 
-	(function(global, module, define, Error, TypeError, D, M, O, A, N) {
+	(function(global, module, define, Error, TypeError, RangeError, D, M, O, A, N) {
 
 		"use strict";
 
@@ -327,30 +327,30 @@
 				get: function() {
 					return privateCapacity;
 				},
-				set: function(capacity) {
-					if (typeof capacity !== NUMBER_TYPE || capacity < 0 || capacity === privateCapacity) {
-						return false;
-					} else if (capacity < privateCapacity) {
-						var difference = privateCapacity - capacity;
+				set: (function() {
+					var injunctionErrorMaker = function(x, e) {
+						return new e("Capacity must be " + x + ".");
+					};
 
-						for (var i = 0, l = M.min(_this2.size, capacity); i < l; i += 2) {
-							var index = getDefinedProperty("_oldestIndex");
-							_this2.unset(cache[index - 1]);
+					return function(capacity) {
+						if (capacity === privateCapacity) {
+							return;
+						} else if (typeof capacity !== NUMBER_TYPE || isNaN(capacity)) {
+							throw injunctionErrorMaker("a number (excluding NaN)", TypeError);
+						} else if (capacity < 0) {
+							throw injunctionErrorMaker("non-negative", RangeError);
+						} else if (capacity < privateCapacity) {
+							var difference = M.min(privateCapacity, _this2.size) - capacity;
+
+							for (var i = 0; i < difference; ++i) {
+								var index = getDefinedProperty("_oldestIndex");
+								_this2.unset(cache[index - 1]);
+							}
 						}
-					}
 
-					var value = capacity !== NUMBER_TYPE && !isNaN(capacity)
-						? parseInt(capacity, 10)
-						: capacity;
-
-					value = M.min(value, MAX_CAPACITY);
-
-					if (isNaN(value))
-						throw new TypeError("Suggested capacity cannot be parsed.");
-
-					privateCapacity = M.max(value, 0);
-					return true;
-				}
+						privateCapacity = M.min(M.round(capacity), MAX_CAPACITY);
+					};
+				})()
 			});
 
 			setDefinedProperty(
@@ -471,6 +471,7 @@
 		this.define,
 		Error,
 		TypeError,
+		RangeError,
 		Date,
 		Math,
 		Object,
