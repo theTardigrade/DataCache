@@ -403,10 +403,15 @@ function DataCache(options) {
 	},
 
 	filter: function(callback, options) {
+		let filteredKeys = [];
+
 		this.iterate((key, value) => {
 			if (!callback(key, value))
-				this.unset(key);
+				filteredKeys.push(key);
 		}, options);
+
+		for (let i = 0, l = filteredKeys.length; i < l; ++i)
+			this.unset(filteredKeys[i]);
 	},
 
 	isFull: function() {

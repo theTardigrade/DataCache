@@ -419,11 +419,16 @@
 			},
 
 			filter: function(callback, options) {
-				var _this4 = this;
+				var filteredKeys = [];
+
 				this.iterate((function(key, value) {
 					if (!callback(key, value))
-						_this4.unset(key);
+						filteredKeys.push(key);
 				}), options);
+
+				for (var i = 0, l = filteredKeys.length; i < l; ++i) {
+					this.unset(filteredKeys[i]);
+				}
 			},
 
 			isFull: function() {
