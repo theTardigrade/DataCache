@@ -169,11 +169,6 @@ function DataCache(options) {
 		if (index >= privateCapacity * 2)
 			index = getDefinedProperty("_oldestIndex");
 
-		// use ECMAScript 5 freeze function to make objects immutable,
-		// therefore stored data can only be changed by re-setting it
-		if (typeof data === OBJECT_TYPE && EXISTS.freeze)
-			O.freeze(data);
-
 		let object = {
 				data: data
 			},
@@ -185,6 +180,13 @@ function DataCache(options) {
 				: metadata;
 
 		metadata.created = cachedMetadata.created || cachedMetadata.updated;
+
+		// use ECMAScript 5 freeze function to make objects immutable,
+		// therefore stored data and metadata can only be changed by
+		// re-setting it
+		if (EXISTS.freeze)
+			for (let key in object)
+				O.freeze(object[key]);
 
 		cache[index - 1] = key;
 		cache[index] = object;

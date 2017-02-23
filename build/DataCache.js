@@ -177,9 +177,6 @@
 				if (index >= privateCapacity * 2)
 					index = getDefinedProperty("_oldestIndex");
 
-				if (typeof data === OBJECT_TYPE && EXISTS.freeze)
-					O.freeze(data);
-
 				var object = {
 						data: data
 					},
@@ -194,6 +191,11 @@
 					: metadata;
 
 				metadata.created = cachedMetadata.created || cachedMetadata.updated;
+
+				if (EXISTS.freeze)
+					for (var _key in object) {
+						O.freeze(object[_key]);
+					}
 
 				cache[index - 1] = key;
 				cache[index] = object;
