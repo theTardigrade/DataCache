@@ -20,8 +20,8 @@
     "gulp-babel": "^6.1.2",
     "gulp-beautify": "^2.0.1",
     "gulp-optimize-js": "^1.1.0",
-    "gulp-remove-empty-lines": "0.0.8",
     "gulp-rename": "^1.2.2",
+    "gulp-replace": "^0.5.4",
     "gulp-strip-comments": "^2.4.4",
     "gulp-uglify": "^2.0.1",
     "gulp-wrap": "^0.13.0"

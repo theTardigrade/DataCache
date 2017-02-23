@@ -13,7 +13,7 @@ const plugins = ((keys) => {
 		"beautify",
 		"optimize-js",
 		"rename",
-		"remove-empty-lines",
+		"replace",
 		"strip-comments",
 		"uglify",
 		"wrap"
@@ -46,7 +46,7 @@ gulp.task("script", () => {
 	// non-minified, but commentless
 	getSrc()
 		.pipe(plugins["strip-comments"]())
-		.pipe(plugins["remove-empty-lines"]())
+		.pipe(plugins["replace"](/\n{2,}/g, "\n\n"))
 		.pipe(plugins.beautify({
 			eol: "\n",
 			indent_with_tabs: true,
