@@ -409,16 +409,11 @@
 			},
 
 			filter: function(callback, options) {
-				var filteredKeys = [];
-
+				var _this3 = this;
 				this.iterate((function(key, value) {
 					if (!callback(key, value))
-						filteredKeys.push(key);
+						_this3.unset(key);
 				}), options);
-
-				for (var i = 0, l = filteredKeys.length; i < l; ++i) {
-					this.unset(filteredKeys[i]);
-				}
 			},
 
 			isFull: function() {

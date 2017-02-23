@@ -18,9 +18,9 @@ const EXISTS = ((data) => {
 
 // cache key can be set to accept one of the following types
 const ALLOWABLE_KEY_TYPES = [
-	STRING_TYPE,
-	NUMBER_TYPE
-];
+		STRING_TYPE,
+		NUMBER_TYPE
+	];
 
 if (!EXISTS.includes) {
 	let includes = function(predicative) {
@@ -392,15 +392,10 @@ function DataCache(options) {
 	},
 
 	filter: function(callback, options) {
-		let filteredKeys = [];
-
 		this.iterate((key, value) => {
 			if (!callback(key, value))
-				filteredKeys.push(key);
+				this.unset(key);
 		}, options);
-
-		for (let i = 0, l = filteredKeys.length; i < l; ++i)
-			this.unset(filteredKeys[i]);
 	},
 
 	isFull: function() {
