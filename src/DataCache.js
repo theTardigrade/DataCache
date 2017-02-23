@@ -323,7 +323,7 @@ function DataCache(options) {
 				let difference = privateCapacity - capacity;
 
 				for (let i = 0, l = M.min(this.size, capacity); i < l; i += 2) {
-					let index = this._getOldestIndex();
+					let index = getDefinedProperty("_oldestIndex");
 					this.unset(cache[index - 1]);
 				}
 			}
@@ -367,6 +367,21 @@ function DataCache(options) {
 		}
 	});
 }
+
+
+// the following method, on both the constructor and its instances, can be used
+// to determine whether to use new-style getters and setters if it returns true
+//     (e.g. this.capacity = 100)
+// or old-style getters and settters if false
+//     (e.g. this.setCapacity(100))
+((methodName) => {
+	let objects = [ DataCache, DataCache.prototype ],
+		method = (() => EXISTS.defineProperty);
+
+	for (let i = 0, l = objects.length; i < l; ++i)
+		objects[i][methodName] = method;
+})("supportsNativeGettersAndSetters");
+
 
 (function(prototype) {
 
@@ -422,16 +437,10 @@ function DataCache(options) {
 
 	isEmpty: function() {
 		return ((EXISTS.defineProperty) ? this.size : this.getSize()) === 0;
-	},
-
-	// the following function can be used to determine whether to use old-style
-	// getters and settters (e.g. this.setCapacity(100)), if it returns false,
-	// or new-style (e.g. this.capacity = 100)
-	supportsNativeGettersAndSetters: () => {
-		return EXISTS.defineProperty;
 	}
 
 });
+
 
 if (typeof module === OBJECT_TYPE && typeof module.exports === OBJECT_TYPE) {
 	// CommonJS / Node.js

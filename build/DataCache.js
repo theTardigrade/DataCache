@@ -334,7 +334,7 @@
 						var difference = privateCapacity - capacity;
 
 						for (var i = 0, l = M.min(_this2.size, capacity); i < l; i += 2) {
-							var index = _this2._getOldestIndex();
+							var index = getDefinedProperty("_oldestIndex");
 							_this2.unset(cache[index - 1]);
 						}
 					}
@@ -376,6 +376,17 @@
 			});
 
 		}
+
+		(function(methodName) {
+			var objects = [DataCache, DataCache.prototype],
+				method = function() {
+					return EXISTS.defineProperty;
+				};
+
+			for (var i = 0, l = objects.length; i < l; ++i) {
+				objects[i][methodName] = method;
+			}
+		})("supportsNativeGettersAndSetters");
 
 		(function(prototype) {
 
@@ -439,10 +450,6 @@
 
 			isEmpty: function() {
 				return (EXISTS.defineProperty ? this.size : this.getSize()) === 0;
-			},
-
-			supportsNativeGettersAndSetters: function() {
-				return EXISTS.defineProperty;
 			}
 		});
 
