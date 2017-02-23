@@ -90,7 +90,7 @@
 			var cache = this._debugCache = [];
 			this.get = function(key, options) {
 				var value = null;
-				if (typeof key !== getDefinedProperty("keyType"))
+				if (typeof key !== privateKeyType)
 					return value;
 				var index = search(cache, key);
 				if (index === -1)
@@ -117,19 +117,17 @@
 				return value;
 			};
 			this.has = function(key) {
-				var keyType = getDefinedProperty("keyType");
-				return typeof key === keyType && search(cache, key) > -1;
+				return typeof key === privateKeyType && search(cache, key) > -1;
 			};
 			this.set = function(key, data) {
-				var keyType = getDefinedProperty("keyType");
-				if (typeof keyType !== STRING_TYPE)
-					setDefinedProperty("keyType", keyType = typeof key);
-				if (typeof key !== keyType)
+				if (typeof privateKeyType !== STRING_TYPE)
+					setDefinedProperty("keyType", typeof key);
+				if (typeof key !== privateKeyType)
 					throw new TypeError("Key must be a " + keyType + ".");
 				var index = search(cache, key);
 				if (index === -1)
 					index = cache.length + 1;
-				if (index >= getDefinedProperty("capacity") * 2)
+				if (index >= privateCapacity * 2)
 					index = getDefinedProperty("_oldestIndex");
 				if (typeof data === OBJECT_TYPE && EXISTS.freeze)
 					O.freeze(data);
@@ -146,7 +144,7 @@
 				return object;
 			};
 			this.unset = function(key) {
-				if (typeof key !== getDefinedProperty("keyType"))
+				if (typeof key !== privateKeyType)
 					return false;
 				var index = search(cache, key),
 					length = cache.length;
@@ -165,14 +163,13 @@
 				return !sort(cache);
 			};
 			this.iterate = function(callback, options) {
-				var keyType = getDefinedProperty("keyType"),
-					boundThis = this,
+				var boundThis = this,
 					curriedGet = function(key) {
 						return boundThis.get(key, options);
 					};
 				for (var i = 0, l = cache.length; i < l; i += 2) {
 					var key = cache[i];
-					if (typeof key !== keyType)
+					if (typeof key !== privateKeyType)
 						continue;
 					callback(key, curriedGet(key));
 				}

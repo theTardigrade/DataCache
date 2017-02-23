@@ -107,7 +107,7 @@ function DataCache(options) {
 	this.get = function(key, options) {
 		let value = null;
 
-		if (typeof key !== getDefinedProperty("keyType"))
+		if (typeof key !== privateKeyType)
 			return value;
 
 		let index = search(cache, key);
@@ -143,18 +143,14 @@ function DataCache(options) {
 	};
 
 	this.has = function(key) {
-		let keyType = getDefinedProperty("keyType");
-
-		return (typeof key === keyType && search(cache, key) > -1);
+		return (typeof key === privateKeyType && search(cache, key) > -1);
 	};
 
 	this.set = function(key, data) {
-		let keyType = getDefinedProperty("keyType");
+		if (typeof privateKeyType !== STRING_TYPE)
+			setDefinedProperty("keyType", (typeof key));
 
-		if (typeof keyType !== STRING_TYPE)
-			setDefinedProperty("keyType", (keyType = (typeof key)));
-
-		if (typeof key !== keyType)
+		if (typeof key !== privateKeyType)
 			throw new TypeError("Key must be a " + keyType + ".");
 
 		let index = search(cache, key);
@@ -164,7 +160,7 @@ function DataCache(options) {
 
 		// when capacity is reached, start writing over oldest data
 		// use double value to account for consecutive key-value pairs
-		if (index >= getDefinedProperty("capacity") * 2)
+		if (index >= privateCapacity * 2)
 			index = getDefinedProperty("_oldestIndex");
 
 		// use ECMAScript 5 freeze function to make objects immutable,
@@ -189,7 +185,7 @@ function DataCache(options) {
 	};
 
 	this.unset = function(key) {
-		if (typeof key !== getDefinedProperty("keyType"))
+		if (typeof key !== privateKeyType)
 			return false;
 
 		let index = search(cache, key),
@@ -214,14 +210,13 @@ function DataCache(options) {
 	};
 
 	this.iterate = function(callback, options) {
-		let keyType = getDefinedProperty("keyType"),
-			boundThis = this,
+		let boundThis = this,
 			curriedGet = (key) => boundThis.get(key, options);
 
 		for (let i = 0, l = cache.length; i < l; i += 2) {
 			let key = cache[i];
 
-			if (typeof key !== keyType)
+			if (typeof key !== privateKeyType)
 				continue;
 
 			callback(key, curriedGet(key));
