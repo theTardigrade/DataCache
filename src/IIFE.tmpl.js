@@ -8,24 +8,26 @@
         NUMBER_TYPE = "number",
         UNDEFINED_TYPE = "undefined";
 
-    ((global, module, Error, TypeError, D, M, O, N) => {
+    ((global, module, process, Error, TypeError, D, M, O, A, N) => {
 
         "use strict";
 
 		<%= contents %>
 
 	})(
-        (typeof window === OBJECT_TYPE)
-            ? window
-            : (typeof global === OBJECT_TYPE)
-                ? global
+        (typeof this.window === OBJECT_TYPE)
+            ? this.window
+            : (typeof this.global === OBJECT_TYPE)
+                ? this.global
                 : this,
         this.module,
+		this.process,
         Error,
         TypeError,
         Date,
         Math,
         Object,
+        Array,
         Number
     );
 

@@ -4,18 +4,15 @@
 		STRING_TYPE = "string",
 		NUMBER_TYPE = "number",
 		UNDEFINED_TYPE = "undefined";
-	(function(global, module, Error, TypeError, D, M, O, N) {
+	(function(global, module, process, Error, TypeError, D, M, O, A, N) {
 		"use strict";
 		var IS_NODE =
 			typeof module === OBJECT_TYPE
 			&& typeof module.exports === OBJECT_TYPE
 			&& typeof process === OBJECT_TYPE
-			&& typeof process.versions == OBJECT_TYPE
+			&& typeof process.versions === OBJECT_TYPE
 			&& !isNaN(parseFloat(process.versions.node, 10));
-		var ALLOWABLE_KEY_TYPES = [STRING_TYPE, NUMBER_TYPE];
-		var MAX_ARRAY_LENGTH = (1 << 16) * (1 << 16) - 1,
-			MAX_CAPACITY = M.floor(MAX_ARRAY_LENGTH / 2);
-		var exists = (function(data) {
+		var EXISTS = (function(data) {
 			var o = {};
 			for (var i = 0, l = data.length; i < l; ++i) {
 				var d = data[i];
@@ -34,8 +31,28 @@
 			{
 				key: "now",
 				object: D
+			},
+			{
+				key: "includes",
+				object: A.prototype
 			}
 		]);
+		var ALLOWABLE_KEY_TYPES = [
+			STRING_TYPE,
+			NUMBER_TYPE
+		];
+		if (!EXISTS.includes) {
+			var includes = function(predicative) {
+				for (var i = 0, l = this.length; i < l; ++i) {
+					if (predicative === this[i])
+						return true;
+				}
+				return false;
+			};
+			ALLOWABLE_KEY_TYPES.includes = includes;
+		}
+		var MAX_ARRAY_LENGTH = (1 << 16) * (1 << 16) - 1,
+			MAX_CAPACITY = M.floor(MAX_ARRAY_LENGTH / 2);
 		var search = function(cacheArray, key) {
 			var lowerBound = 0,
 				upperBound = cacheArray.length - 1;
@@ -114,11 +131,11 @@
 					index = cache.length + 1;
 				if (index >= getDefinedProperty("capacity") * 2)
 					index = getDefinedProperty("_oldestIndex");
-				if (typeof data === OBJECT_TYPE && exists.freeze)
+				if (typeof data === OBJECT_TYPE && EXISTS.freeze)
 					O.freeze(data);
 				var object = {
 					data: data,
-					updated: exists.now ? D.now() : new D().getTime()
+					updated: EXISTS.now ? D.now() : new D().getTime()
 				};
 				object.created = cache[index] && cache[index].created
 					? cache[index].created
@@ -172,7 +189,7 @@
 					return u + prop.slice(i + 1);
 				},
 				definePropertyHere = function(prop, options) {
-					if (exists.defineProperty) {
+					if (EXISTS.defineProperty) {
 						O.defineProperty(_this, prop, options);
 					} else {
 						var keys = ["g", "s"];
@@ -184,12 +201,12 @@
 					}
 				},
 				getDefinedProperty = function(prop) {
-					return exists.defineProperty
+					return EXISTS.defineProperty
 						? _this[prop]
 						: _this[getFallbackDefinedPropertyName("get", prop)]();
 				},
 				setDefinedProperty = function(prop, value) {
-					return exists.defineProperty
+					return EXISTS.defineProperty
 						? _this[prop] = value
 						: _this[getFallbackDefinedPropertyName("set", prop)](value);
 				};
@@ -209,17 +226,10 @@
 							: " and " + t + ".";
 					}
 					return function(keyType) {
-						var isTypeAllowable = (function() {
-							for (var _i2 = 0, _l = ALLOWABLE_KEY_TYPES.length; _i2 < _l; ++_i2) {
-								if (keyType === ALLOWABLE_KEY_TYPES[_i2])
-									return true;
-							}
-							return false;
-						})();
 						if (keyType === privateKeyType)
 							return;
-						if (isTypeAllowable)
-							privateKeyType = keyType.toLowerCase();
+						if (ALLOWABLE_KEY_TYPES.includes(keyType))
+							privateKeyType = keyType;
 						else
 							throw new TypeError(errorMessage);
 					};
@@ -277,7 +287,7 @@
 			});
 		}
 		(function(prototype) {
-			if (exists.assign)
+			if (EXISTS.assign)
 				O.assign(DataCache.prototype, prototype);
 			else
 				for (var key in prototype) {
@@ -319,15 +329,15 @@
 				}
 			},
 			isFull: function() {
-				return exists.defineProperty
+				return EXISTS.defineProperty
 					? this.size === this.capacity
 					: this.getSize() === this.getCapacity();
 			},
 			isEmpty: function() {
-				return (exists.defineProperty ? this.size : this.getSize()) === 0;
+				return (EXISTS.defineProperty ? this.size : this.getSize()) === 0;
 			},
 			supportsNativeGettersAndSetters: function() {
-				return exists.defineProperty;
+				return EXISTS.defineProperty;
 			}
 		});
 		if (IS_NODE) {
@@ -336,16 +346,18 @@
 			global.DataCache = DataCache;
 		}
 	})(
-		typeof window === OBJECT_TYPE
-		? window
-		: typeof global === OBJECT_TYPE
-		? global
+		typeof this.window === OBJECT_TYPE
+		? this.window
+		: typeof this.global === OBJECT_TYPE
+		? this.global
 		: this,
 		this.module,
+		this.process,
 		Error,
 		TypeError,
 		Date,
 		Math,
 		Object,
+		Array,
 		Number);
 })();

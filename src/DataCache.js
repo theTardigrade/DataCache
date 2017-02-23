@@ -3,20 +3,13 @@ const IS_NODE = (
 		typeof module === OBJECT_TYPE
 		&& typeof module.exports === OBJECT_TYPE
 		&& typeof process === OBJECT_TYPE
-		&& typeof process.versions == OBJECT_TYPE
+		&& typeof process.versions === OBJECT_TYPE
 		&& !isNaN(parseFloat(process.versions.node, 10))
 	);
 
-// cache key can be set to accept one of the following types
-const ALLOWABLE_KEY_TYPES = [STRING_TYPE, NUMBER_TYPE/*, "symbol"*/];
-
-// used to ensure that underlying array does not exceed maximum allowed (i.e. 4.29bn)
-const MAX_ARRAY_LENGTH = ((1 << 16) * (1 << 16)) - 1,
-	MAX_CAPACITY = M.floor(MAX_ARRAY_LENGTH / 2);
-
 // object where keys are names of properties defined on global objects
 // and values are booleans showing whether they're available or not
-let exists = ((data) => {
+const EXISTS = ((data) => {
 		let o = {};
 		for (let i = 0, l = data.length; i < l; ++i) {
 			let d = data[i];
@@ -27,8 +20,30 @@ let exists = ((data) => {
 		{ key: "assign" },
 		{ key: "defineProperty" },
 		{ key: "freeze" },
-		{ key: "now", object: D }
+		{ key: "now", object: D },
+		{ key: "includes", object: A.prototype }
 	]);
+
+// cache key can be set to accept one of the following types
+const ALLOWABLE_KEY_TYPES = [
+	STRING_TYPE,
+	NUMBER_TYPE
+];
+
+if (!EXISTS.includes) {
+	let includes = function(predicative) {
+			for (let i = 0, l = this.length; i < l; ++i)
+				if (predicative === this[i])
+					return true;
+			return false;
+		};
+
+	ALLOWABLE_KEY_TYPES.includes = includes;
+}
+
+// used to ensure that underlying array does not exceed maximum allowed (i.e. 4.29bn)
+const MAX_ARRAY_LENGTH = ((1 << 16) * (1 << 16)) - 1,
+	MAX_CAPACITY = M.floor(MAX_ARRAY_LENGTH / 2);
 
 // binary search, considering only even-numbered indices
 // to account for the fact that in the array used to hold cache data
@@ -154,12 +169,12 @@ function DataCache(options) {
 
 		// use ECMAScript 5 freeze function to make objects immutable,
 		// therefore stored data can only be changed by re-setting it
-		if (typeof data === OBJECT_TYPE && exists.freeze)
+		if (typeof data === OBJECT_TYPE && EXISTS.freeze)
 			O.freeze(data);
 
 		let object = {
 				data: data,
-				updated: (exists.now) ? D.now() : new D().getTime()
+				updated: (EXISTS.now) ? D.now() : new D().getTime()
 			};
 
 		object.created = (cache[index] && cache[index].created)
@@ -228,7 +243,7 @@ function DataCache(options) {
 			return u + prop.slice(i + 1);
 		},
 		definePropertyHere = (prop, options) => {
-			if (exists.defineProperty) {
+			if (EXISTS.defineProperty) {
 				O.defineProperty(this, prop, options);
 			} else {
 				let keys = [ "g", "s" ];
@@ -241,12 +256,12 @@ function DataCache(options) {
 			}
 		},
 		getDefinedProperty = (prop) => {
-			return (exists.defineProperty)
+			return (EXISTS.defineProperty)
 				? this[prop]
 				: this[getFallbackDefinedPropertyName("get", prop)]();
 		},
 		setDefinedProperty = (prop, value) => {
-			return (exists.defineProperty)
+			return (EXISTS.defineProperty)
 				? (this[prop] = value)
 				: this[getFallbackDefinedPropertyName("set", prop)](value);
 		};
@@ -271,18 +286,11 @@ function DataCache(options) {
 			}
 
 			return function(keyType) {
-				let isTypeAllowable = (() => {
-						for (let i = 0, l = ALLOWABLE_KEY_TYPES.length; i < l; ++i)
-							if (keyType === ALLOWABLE_KEY_TYPES[i])
-								return true;
-						return false;
-					})();
-
 				if (keyType === privateKeyType)
 					return;
 
-				if (isTypeAllowable)
-					privateKeyType = keyType.toLowerCase();
+				if (ALLOWABLE_KEY_TYPES.includes(keyType))
+					privateKeyType = keyType;
 				else
 					throw new TypeError(errorMessage);
 			};
@@ -356,7 +364,7 @@ function DataCache(options) {
 
 (function(prototype) {
 
-	if (exists.assign)
+	if (EXISTS.assign)
 		O.assign(DataCache.prototype, prototype);
 	else
 		for (let key in prototype)
@@ -401,20 +409,20 @@ function DataCache(options) {
 	},
 
 	isFull: function() {
-		return (exists.defineProperty)
+		return (EXISTS.defineProperty)
 			? this.size === this.capacity
 			: this.getSize() === this.getCapacity();
 	},
 
 	isEmpty: function() {
-		return ((exists.defineProperty) ? this.size : this.getSize()) === 0;
+		return ((EXISTS.defineProperty) ? this.size : this.getSize()) === 0;
 	},
 
 	// the following function can be used to determine whether to use old-style
 	// getters and settters (e.g. this.setCapacity(100)), if it returns false,
 	// or new-style (e.g. this.capacity = 100)
 	supportsNativeGettersAndSetters: () => {
-		return exists.defineProperty;
+		return EXISTS.defineProperty;
 	}
 
 });
