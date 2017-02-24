@@ -216,14 +216,16 @@
 			};
 
 			this.unset = function(key) {
+				var value = null;
+
 				if (typeof key !== privateKeyType)
-					return false;
+					return value;
 
 				var index = search(cache, key),
 					length = cache.length;
 
 				if (index === -1)
-					return false;
+					return value;
 
 				if (length > 2) {
 					for (var i = 1, temp; i >= 0; --i) {
@@ -233,29 +235,29 @@
 					}
 				}
 
-				for (var _i2 = 0; _i2 < 2; ++_i2) {
-					cache.pop();
-				}
+				value = cache.pop();
+				cache.pop();
 
-				return !sort(cache);
+				sort(cache);
+				return value;
 			};
 
 			this.iterate = function(callback, options) {
 				for (var i = 0, l = cache.length, key; i < l; i += 2) {
 					key = cache[i];
+
 					callback(key, this.get(key, options));
 				}
 			};
 
 			this.map = function(callback, options) {
+				var returnsFullObject = !options || !options.dataOnly;
+
 				for (var i = 0, l = cache.length, key, newValue; i < l; i += 2) {
 					key = cache[i];
 					newValue = callback(key, this.get(key, options));
 
-					if (!options || !options.dataOnly)
-						newValue = newValue.data;
-
-					this.set(key, newValue);
+					this.set(key, returnsFullObject ? newValue.data : newValue);
 				}
 			};
 
@@ -271,7 +273,7 @@
 			};
 
 			this.clear = function() {
-				return !!(cache = []);
+				cache = [];
 			};
 
 			var getFallbackDefinedPropertyName = function(prefix, prop) {

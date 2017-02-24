@@ -209,14 +209,16 @@ function DataCache(options) {
 	};
 
 	this.unset = function(key) {
+		let value = null;
+
 		if (typeof key !== privateKeyType)
-			return false;
+			return value;
 
 		let index = search(cache, key),
 			length = cache.length;
 
 		if (index === -1)
-			return false;
+			return value;
 
 		if (length > 2) {
 			// swap current indices with final two indices in order to pop
@@ -227,28 +229,29 @@ function DataCache(options) {
 			}
 		}
 
-		for (let i = 0; i < 2; ++i)
-			cache.pop();
+		value = cache.pop();
+		cache.pop();
 
-		return !(sort(cache)); // true
+		sort(cache);
+		return value;
 	};
 
 	this.iterate = function(callback, options) {
 		for (let i = 0, l = cache.length, key; i < l; i += 2) {
 			key = cache[i];
+
 			callback(key, this.get(key, options));
 		}
 	};
 
 	this.map = function(callback, options) {
+		let returnsFullObject = (!options || !options.dataOnly);
+
 		for (let i = 0, l = cache.length, key, newValue; i < l; i += 2) {
 			key = cache[i];
 			newValue = callback(key, this.get(key, options));
 
-			if (!options || !options.dataOnly)
-				newValue = newValue.data;
-
-			this.set(key, newValue);
+			this.set(key, ((returnsFullObject) ? newValue.data : newValue));
 		}
 	};
 
@@ -264,7 +267,7 @@ function DataCache(options) {
 	};
 
 	this.clear = () => {
-		return !!(cache = []); // true
+		cache = [];
 	};
 
 	/* initialize getters and setters, including fallback for environments without native support */
