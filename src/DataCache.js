@@ -170,6 +170,9 @@ function DataCache(options) {
 		if (typeof key !== privateKeyType)
 			throw new TypeError("Key must be a " + privateKeyType + ".");
 
+		if (typeof data === UNDEFINED_TYPE || data === null)
+			return this.unset(key);
+
 		let index = search(cache, key);
 
 		if (index === -1)
@@ -231,15 +234,32 @@ function DataCache(options) {
 	};
 
 	this.iterate = function(callback, options) {
-		let curriedGet = (key) => this.get(key, options);
+		for (let i = 0, l = cache.length, key; i < l; i += 2) {
+			key = cache[i];
+			callback(key, this.get(key, options));
+		}
+	};
 
-		for (let i = 0, l = cache.length; i < l; i += 2) {
-			let key = cache[i];
+	this.map = function(callback, options) {
+		for (let i = 0, l = cache.length, key, newValue; i < l; i += 2) {
+			key = cache[i];
+			newValue = callback(key, this.get(key, options));
 
-			if (typeof key !== privateKeyType)
-				continue;
+			if (!options || !options.dataOnly)
+				newValue = newValue.data;
 
-			callback(key, curriedGet(key));
+			this.set(key, newValue);
+		}
+	};
+
+	this.filter = function(callback, options) {
+		for (let i = 0, l = cache.length, key; i < l; i += 2) {
+			key = cache[i];
+
+			if (!callback(key, this.get(key, options))) {
+				cache.splice(i, 2);
+				i -= 2, l -= 2;
+			}
 		}
 	};
 
@@ -413,30 +433,6 @@ function DataCache(options) {
 			return this.get(key, options);
 		}
 	})({ metadataOnly: true }),
-
-	map: function(callback, options) {
-		this.iterate((key, value) => {
-			let newValue = callback(key, value);
-
-			if (!options || !options.dataOnly)
-				newValue = newValue.data;
-
-			if (typeof newValue !== UNDEFINED_TYPE)
-				this.set(key, newValue);
-		}, options);
-	},
-
-	filter: function(callback, options) {
-		let filteredKeys = [];
-
-		this.iterate((key, value) => {
-			if (!callback(key, value))
-				filteredKeys.push(key);
-		}, options);
-
-		for (let i = 0, l = filteredKeys.length; i < l; ++i)
-			this.unset(filteredKeys[i]);
-	},
 
 	isFull: function() {
 		return (EXISTS.defineProperty)

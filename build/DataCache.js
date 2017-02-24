@@ -129,7 +129,7 @@
 		};
 
 		function DataCache(options) {
-			var _this2 = this;
+			var _this = this;
 			var cache = this._debugCache = [];
 
 			this.get = (function() {
@@ -178,6 +178,9 @@
 
 				if (typeof key !== privateKeyType)
 					throw new TypeError("Key must be a " + privateKeyType + ".");
+
+				if (typeof data === UNDEFINED_TYPE || data === null)
+					return this.unset(key);
 
 				var index = search(cache, key);
 
@@ -238,18 +241,32 @@
 			};
 
 			this.iterate = function(callback, options) {
-				var _this = this;
-				var curriedGet = function(key) {
-					return _this.get(key, options);
-				};
+				for (var i = 0, l = cache.length, key; i < l; i += 2) {
+					key = cache[i];
+					callback(key, this.get(key, options));
+				}
+			};
 
-				for (var i = 0, l = cache.length; i < l; i += 2) {
-					var key = cache[i];
+			this.map = function(callback, options) {
+				for (var i = 0, l = cache.length, key, newValue; i < l; i += 2) {
+					key = cache[i];
+					newValue = callback(key, this.get(key, options));
 
-					if (typeof key !== privateKeyType)
-						continue;
+					if (!options || !options.dataOnly)
+						newValue = newValue.data;
 
-					callback(key, curriedGet(key));
+					this.set(key, newValue);
+				}
+			};
+
+			this.filter = function(callback, options) {
+				for (var i = 0, l = cache.length, key; i < l; i += 2) {
+					key = cache[i];
+
+					if (!callback(key, this.get(key, options))) {
+						cache.splice(i, 2);
+						i -= 2, l -= 2;
+					}
 				}
 			};
 
@@ -267,26 +284,26 @@
 				},
 				definePropertyHere = function(prop, options) {
 					if (EXISTS.defineProperty) {
-						O.defineProperty(_this2, prop, options);
+						O.defineProperty(_this, prop, options);
 					} else {
 						var keys = ["g", "s"];
 
 						for (var i = 0, l = keys.length, k; i < l; ++i) {
 							k = keys[i] + "et";
 							if (typeof options[k] === FUNCTION_TYPE)
-								_this2[getFallbackDefinedPropertyName(k, prop)] = options[k];
+								_this[getFallbackDefinedPropertyName(k, prop)] = options[k];
 						}
 					}
 				},
 				getDefinedProperty = function(prop) {
 					return EXISTS.defineProperty
-						? _this2[prop]
-						: _this2[getFallbackDefinedPropertyName("get", prop)]();
+						? _this[prop]
+						: _this[getFallbackDefinedPropertyName("get", prop)]();
 				},
 				setDefinedProperty = function(prop, value) {
 					return EXISTS.defineProperty
-						? _this2[prop] = value
-						: _this2[getFallbackDefinedPropertyName("set", prop)](value);
+						? _this[prop] = value
+						: _this[getFallbackDefinedPropertyName("set", prop)](value);
 				};
 
 			var privateKeyType = null;
@@ -353,11 +370,11 @@
 						} else if (capacity < 0) {
 							throw injunctionErrorMaker("non-negative", RangeError);
 						} else if (capacity < privateCapacity) {
-							var difference = M.min(privateCapacity, _this2.size) - capacity;
+							var difference = M.min(privateCapacity, _this.size) - capacity;
 
 							for (var i = 0; i < difference; ++i) {
 								var index = getDefinedProperty("_oldestIndex");
-								_this2.unset(cache[index - 1]);
+								_this.unset(cache[index - 1]);
 							}
 						}
 
@@ -428,32 +445,6 @@
 			})({
 				metadataOnly: true
 			}),
-
-			map: function(callback, options) {
-				var _this3 = this;
-				this.iterate((function(key, value) {
-					var newValue = callback(key, value);
-
-					if (!options || !options.dataOnly)
-						newValue = newValue.data;
-
-					if (typeof newValue !== UNDEFINED_TYPE)
-						_this3.set(key, newValue);
-				}), options);
-			},
-
-			filter: function(callback, options) {
-				var filteredKeys = [];
-
-				this.iterate((function(key, value) {
-					if (!callback(key, value))
-						filteredKeys.push(key);
-				}), options);
-
-				for (var i = 0, l = filteredKeys.length; i < l; ++i) {
-					this.unset(filteredKeys[i]);
-				}
-			},
 
 			isFull: function() {
 				return EXISTS.defineProperty
