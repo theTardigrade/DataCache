@@ -308,7 +308,18 @@ function DataCache(options) {
 
 
 	definePropertyHere("size", {
-		get: (() => cache.length / 2)
+		get: (() => cache.length / 2),
+		set: (size) => {
+			if (size >= getDefinedProperty("size"))
+				return;
+
+			let capacityStr = "capacity",
+				setCapacity = (capacity) => { setDefinedProperty(capacityStr, capacity); },
+				oldCapacity = getDefinedProperty(capacityStr)
+
+			setCapacity(size);
+			setCapacity(oldCapacity);
+		}
 	});
 
 

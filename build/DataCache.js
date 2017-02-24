@@ -318,6 +318,19 @@
 			definePropertyHere("size", {
 				get: function() {
 					return cache.length / 2;
+				},
+				set: function(size) {
+					if (size >= getDefinedProperty("size"))
+						return;
+
+					var capacityStr = "capacity",
+						setCapacity = function(capacity) {
+							setDefinedProperty(capacityStr, capacity);
+						},
+						oldCapacity = getDefinedProperty(capacityStr);
+
+					setCapacity(size);
+					setCapacity(oldCapacity);
 				}
 			});
 
