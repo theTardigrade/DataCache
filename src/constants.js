@@ -36,3 +36,14 @@ if (!EXISTS.includes) {
 // used to ensure that underlying array does not exceed maximum allowed (i.e. 4.29bn)
 const MAX_ARRAY_LENGTH = ((1 << 16) * (1 << 16)) - 1,
 	MAX_CAPACITY = M.floor(MAX_ARRAY_LENGTH / 2);
+
+/* bitmask options for helper functions */
+
+const NO_OPT = 0;
+
+const ARRAY_TO_HUMAN_STRING_OPT_ALTERNATIVES = 1;
+
+const ERROR_MAKER_OPT_PROPERTY = 1,
+    ERROR_MAKER_OPT_NEGATED = 2,
+    ERROR_MAKER_OPT_ALTERNATIVES = 4;
+

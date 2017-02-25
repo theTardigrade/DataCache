@@ -55,7 +55,7 @@ function DataCache(options) {
 			setDefinedProperty("keyType", (typeof key));
 
 		if (typeof key !== privateKeyType)
-			throw new TypeError("Key must be a " + privateKeyType + ".");
+			throw errorMaker("Key", "a " + privateKeyType, NO_OPT, TypeError);
 
 		if (typeof data === UNDEFINED_TYPE || data === null)
 			return this.unset(key);
@@ -226,8 +226,12 @@ function DataCache(options) {
 	definePropertyHere("keyType", {
 		get: (() => privateKeyType),
 		set: (() => {
-			let errorMessage = "The only allowable key types are "
-					+ arrayToHumanString(ALLOWABLE_KEY_TYPES) + ".";
+			let error = errorMaker(
+					"keyType",
+					ALLOWABLE_KEY_TYPES,
+					ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_PROPERTY,
+					TypeError
+				);
 
 			return (keyType) => {
 				if (keyType === privateKeyType)
@@ -236,7 +240,7 @@ function DataCache(options) {
 				if (ALLOWABLE_KEY_TYPES.includes(keyType))
 					privateKeyType = keyType;
 				else
-					throw new TypeError(errorMessage);
+					throw error;
 			};
 		})()
 	});
@@ -266,15 +270,23 @@ function DataCache(options) {
 	definePropertyHere("capacity", {
 		get: (() => privateCapacity),
 		set: (() => {
-			let injunctionErrorMaker = (x, e) => new e("Capacity must be " + x + ".");
+			// curry function
+			let capacityErrorMaker = (predicative, bitmaskOptions, constructor) => {
+					return errorMaker(
+						"capacity",
+						predicative,
+						ERROR_MAKER_OPT_PROPERTY | bitmaskOptions,
+						constructor
+					);
+				};
 
 			return (capacity) => {
 				if (capacity === privateCapacity) {
 					return; // do nothing
 				} else if (typeof capacity !== NUMBER_TYPE || isNaN(capacity)) {
-					throw injunctionErrorMaker("a number (excluding NaN)", TypeError);
+					throw capacityErrorMaker("a number (excluding NaN)", NO_OPT, TypeError);
 				} else if (capacity < 0) {
-					throw injunctionErrorMaker("non-negative", RangeError);
+					throw capacityErrorMaker("negative", ERROR_MAKER_OPT_NEGATED, RangeError);
 				} else if (capacity < privateCapacity) {
 					let difference = M.min(privateCapacity, this.size) - capacity;
 
@@ -332,11 +344,7 @@ function DataCache(options) {
 
 (function(prototype) {
 
-	if (EXISTS.assign)
-		O.assign(DataCache.prototype, prototype);
-	else
-		for (let key in prototype)
-			DataCache.prototype[key] = prototype[key];
+	assignObject(DataCache.prototype, prototype);
 
 })({
 

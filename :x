@@ -43,6 +43,25 @@ let sort = (cacheArray) => {
 		}
 	};
 
+// return the contents of an array in English human-readable form
+let arrayToHumanString = (array, options) => {
+		let optionsSet = (typeof options === OBJECT_TYPE),
+			str = "";
+
+		if ((EXISTS.isArray) ? A.isArray(array) : O.prototype.toString.call(array) === "[object Array]") {
+			for (let i = 0, l = array.length, tmp; i < l; ++i) {
+				tmp = "\"" + array[i].toString() + "\"";
+				str += (i < l - 2)
+					? tmp + ", "
+					: (i < l - 1)
+						? tmp
+						: ((optionsSet && options.alternatives) ? "or" : " and ") + tmp;
+			}
+		}
+
+		return str;
+	};
+
 // recursively freeze an object, to make it and all of its subobjects
 // immutable (i.e. read-only)
 let deepFreeze = (object) => {
@@ -53,39 +72,21 @@ let deepFreeze = (object) => {
 		O.freeze(object);
 	};
 
-// return the contents of an array in English human-readable form
-let arrayToHumanString = (array, bitmaskOptions) => {
-		let str = "";
-
-		if ((EXISTS.isArray) ? A.isArray(array) : O.prototype.toString.call(array) === "[object Array]") {
-			for (let i = 0, l = array.length, tmp; i < l; ++i) {
-				tmp = "\"" + array[i].toString() + "\"";
-				str += (i < l - 2)
-					? tmp + ", "
-					: (i < l - 1)
-						? tmp
-						: " " + ((bitmaskOptions & ARRAY_TO_HUMAN_STRING_OPT_ALTERNATIVES) ? "or" : "and") + " " + tmp;
-			}
-		}
-
-		return str;
-	};
-
 // used to generate appropriate constructors
-let errorMaker = (thing, predicative, bitmaskOptions, constructor) => {
-		let msg = ((bitmaskOptions & ERROR_MAKER_OPT_PROPERTY) ? "Property [" + thing + "]" : thing)
-				+ " " + ((bitmaskOptions & ERROR_MAKER_OPT_NEGATED) ? "cannot" : "must")
-				+ " be "
-				+ ((bitmaskOptions & ERROR_MAKER_OPT_ALTERNATIVES)
-					? "one of the following: "
-						+ arrayToHumanString(predicative, ARRAY_TO_HUMAN_STRING_OPT_ALTERNATIVES)
-					: predicative)
-				+ ".",
-			isConstructorValid = (typeof constructor === FUNCTION_TYPE
-				|| typeof constructor.name === STRING_TYPE
-				|| constructor.name.slice(-5) === "Error");
+let errorMaker = (thing, predicative, options) => {
+		let optionsSet = (typeof options == OBJECT_TYPE),
+			optionPropertySet = (optionsSet && options.property),
+			msg = ((optionsPropertySet) ? "Property [" : "") + thing
+				+ ((optionsPropertySet) ? "]" : "") + " "
+				+ ((optionsSet && options.negated) ? "cannot" : "must")
+				+ " be " + predicative + ".",
+			constructor = (optionsSet) ? options.constructor : null;
+		
+		if (typeof constructor !== FUNCTION_TYPE || typeof constructor.name !== STRING_TYPE
+		|| constructor .name.slice(-5) !== "Error")
+			constructor = Error;
 
-		return new ((isConstructorValid) ? constructor : Error)(msg);
+		return new constructor(msg);
 	};
 
 // polyfill of Object.assign
@@ -96,8 +97,8 @@ let assignObject = (target, ...sources) => {
 		if (target == null)
 			throw errorMaker(
 				"Target object",
-				[UNDEFINED_TYPE, "null"],
-				{ negated: true, alternatives: true }
+				arrayToHumanString([UNDEFINED_TYPE, "null"], { alternatives: true }),
+				{ negated: true }
 			);
 
 		let t = O(target);
@@ -113,4 +114,6 @@ let assignObject = (target, ...sources) => {
 
 		return t;
 	};
+
+
 

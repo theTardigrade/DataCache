@@ -60,6 +60,14 @@
 		var MAX_ARRAY_LENGTH = (1 << 16) * (1 << 16) - 1,
 			MAX_CAPACITY = M.floor(MAX_ARRAY_LENGTH / 2);
 
+		var NO_OPT = 0;
+
+		var ARRAY_TO_HUMAN_STRING_OPT_ALTERNATIVES = 1;
+
+		var ERROR_MAKER_OPT_PROPERTY = 1,
+			ERROR_MAKER_OPT_NEGATED = 2,
+			ERROR_MAKER_OPT_ALTERNATIVES = 4;
+
 		var search = function(cacheArray, key) {
 			var lowerBound = 0,
 				upperBound = cacheArray.length - 1;
@@ -100,24 +108,6 @@
 			}
 		};
 
-		var arrayToHumanString = function(array) {
-			var str = "";
-
-			if (EXISTS.isArray ? A.isArray(array) : O.prototype.toString.call(array) ===
-				"[object Array]") {
-				for (var i = 0, l = array.length, tmp; i < l; ++i) {
-					tmp = "\"" + array[i] + "\"";
-					str += i < l - 2
-						? tmp + ", "
-						: i < l - 1
-						? tmp
-						: " and " + tmp;
-				}
-			}
-
-			return str;
-		};
-
 		var deepFreeze = function(object) {
 			for (var key in object) {
 				if (typeof object === OBJECT_TYPE)
@@ -125,6 +115,71 @@
 			}
 
 			O.freeze(object);
+		};
+
+		var arrayToHumanString = function(array, bitmaskOptions) {
+			var str = "";
+
+			if (EXISTS.isArray ? A.isArray(array) : O.prototype.toString.call(array) ===
+				"[object Array]") {
+				for (var i = 0, l = array.length, tmp; i < l; ++i) {
+					tmp = "\"" + array[i].toString() + "\"";
+					str += i < l - 2
+						? tmp + ", "
+						: i < l - 1
+						? tmp
+						: " " + (bitmaskOptions & ARRAY_TO_HUMAN_STRING_OPT_ALTERNATIVES ? "or" : "and") + " "
+						+ tmp;
+				}
+			}
+
+			return str;
+		};
+
+		var errorMaker = function(thing, predicative, bitmaskOptions, constructor) {
+			var msg = (bitmaskOptions & ERROR_MAKER_OPT_PROPERTY ? "Property [" + thing + "]" : thing)
+				+ " " + (bitmaskOptions & ERROR_MAKER_OPT_NEGATED ? "cannot" : "must")
+				+ " be " + (
+					bitmaskOptions & ERROR_MAKER_OPT_ALTERNATIVES
+					? "one of the following: "
+					+ arrayToHumanString(predicative, ARRAY_TO_HUMAN_STRING_OPT_ALTERNATIVES)
+					: predicative)
+				+ ".",
+				isConstructorValid = typeof constructor === FUNCTION_TYPE
+				|| typeof constructor.name === STRING_TYPE
+				|| constructor.name.slice(-5) === "Error";
+
+			return new(isConstructorValid ? constructor : Error)(msg);
+		};
+
+		var assignObject = function(target) {
+			for (var _len = arguments.length, sources = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key
+				< _len; _key++) {
+				sources[_key - 1] = arguments[_key];
+			}
+			if (EXISTS.assign)
+				return O.assign.apply(O, [target].concat(sources));
+
+			if (target == null)
+				throw errorMaker(
+					"Target object", [UNDEFINED_TYPE, "null"], {
+						negated: true,
+						alternatives: true
+					});
+
+			var t = O(target);
+
+			for (var i = 0, l = sources.length, s; i < l; ++i) {
+				if ((s = sources[i]) == null)
+					continue;
+
+				for (var key in s) {
+					if (O.prototype.hasOwnProperty.call(s, key))
+						t[key] = s[key];
+				}
+			}
+
+			return t;
 		};
 
 		function DataCache(options) {
@@ -176,7 +231,7 @@
 					setDefinedProperty("keyType", typeof key);
 
 				if (typeof key !== privateKeyType)
-					throw new TypeError("Key must be a " + privateKeyType + ".");
+					throw errorMaker("Key", "a " + privateKeyType, NO_OPT, TypeError);
 
 				if (typeof data === UNDEFINED_TYPE || data === null)
 					return this.unset(key);
@@ -337,8 +392,11 @@
 					return privateKeyType;
 				},
 				set: (function() {
-					var errorMessage = "The only allowable key types are "
-						+ arrayToHumanString(ALLOWABLE_KEY_TYPES) + ".";
+					var error = errorMaker(
+						"keyType",
+						ALLOWABLE_KEY_TYPES,
+						ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_PROPERTY,
+						TypeError);
 
 					return function(keyType) {
 						if (keyType === privateKeyType)
@@ -348,7 +406,7 @@
 							privateKeyType = keyType;
 						else
 
-							throw new TypeError(errorMessage);
+							throw error;
 					};
 				})()
 			});
@@ -382,17 +440,22 @@
 					return privateCapacity;
 				},
 				set: (function() {
-					var injunctionErrorMaker = function(x, e) {
-						return new e("Capacity must be " + x + ".");
+					var capacityErrorMaker = function(predicative, bitmaskOptions, constructor) {
+						return errorMaker(
+							"capacity",
+							predicative,
+							ERROR_MAKER_OPT_PROPERTY | bitmaskOptions,
+							constructor);
+
 					};
 
 					return function(capacity) {
 						if (capacity === privateCapacity) {
 							return;
 						} else if (typeof capacity !== NUMBER_TYPE || isNaN(capacity)) {
-							throw injunctionErrorMaker("a number (excluding NaN)", TypeError);
+							throw capacityErrorMaker("a number (excluding NaN)", NO_OPT, TypeError);
 						} else if (capacity < 0) {
-							throw injunctionErrorMaker("non-negative", RangeError);
+							throw capacityErrorMaker("negative", ERROR_MAKER_OPT_NEGATED, RangeError);
 						} else if (capacity < privateCapacity) {
 							var difference = M.min(privateCapacity, _this.size) - capacity;
 
@@ -444,13 +507,7 @@
 
 		(function(prototype) {
 
-			if (EXISTS.assign)
-				O.assign(DataCache.prototype, prototype);
-			else
-
-				for (var key in prototype) {
-					DataCache.prototype[key] = prototype[key];
-				}
+			assignObject(DataCache.prototype, prototype);
 
 		})({
 

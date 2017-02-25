@@ -37,6 +37,7 @@ gulp.task("script", () => {
 					plugins: [
 							"arrow-functions",
 							"block-scoping",
+							"parameters",
 							"template-literals"
 						].map((s) => ["transform", "es2015", s].join("-")),
 					retainLines: true
