@@ -107,8 +107,7 @@ let deepFreeze = (object) => {
 			if (typeof object === OBJECT_TYPE)
 				deepFreeze(object[key]);
 
-		if (!O.isFrozen(object))
-			O.freeze(object);
+		O.freeze(object);
 	};
 
 /*
@@ -222,10 +221,10 @@ function DataCache(options) {
 
 		if (length > 2) {
 			// swap current indices with final two indices in order to pop
-			for (let i = 1, temp; i >= 0; --i) {
-				temp = cache[index - i];
+			for (let i = 1, tmp; i >= 0; --i) {
+				tmp = cache[index - i];
 				cache[index - i] = cache[length - i - 1];
-				cache[length - i - 1] = temp;
+				cache[length - i - 1] = tmp;
 			}
 		}
 
@@ -256,13 +255,41 @@ function DataCache(options) {
 	};
 
 	this.filter = function(callback, options) {
-		for (let i = 0, l = cache.length, key; i < l; i += 2) {
+		for (let i = 0, l = cache.length, key, swap1, swap2, tmp; i < l; /* empty */) {
 			key = cache[i];
 
 			if (!callback(key, this.get(key, options))) {
-				cache.splice(i, 2);
-				i -= 2, l -= 2;
+				// move filtered indices to the end of array to be subsequently popped
+				for (let j = 0; j < 2; ++j) {
+					swap1 = i + j;
+					swap2 = l - 2 + j;
+
+					tmp = cache[swap1];
+					cache[swap1] = cache[swap2];
+					cache[swap2] = tmp;
+				}
+
+				// pop the moved indices, by shrinking the length
+				l = (cache.length -= 2);
+
+				// move swapped indices back to the end of the array, therefore sorted
+				for (let j = i, m = l - 2; j < m; j += 2) {
+					for (let k = 0; k < 2; ++k) {
+						swap1 = j + k;
+						swap2 = swap1 + 2;
+
+						tmp = cache[swap1];
+						cache[swap1] = cache[swap2];
+						cache[swap2] = tmp;
+					}
+				}
+
+				// skip the increment below in order to revist the same index,
+				// which now contains new data
+				continue;
 			}
+
+			i += 2;
 		}
 	};
 

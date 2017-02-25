@@ -124,8 +124,7 @@
 					deepFreeze(object[key]);
 			}
 
-			if (!O.isFrozen(object))
-				O.freeze(object);
+			O.freeze(object);
 		};
 
 		function DataCache(options) {
@@ -228,10 +227,10 @@
 					return value;
 
 				if (length > 2) {
-					for (var i = 1, temp; i >= 0; --i) {
-						temp = cache[index - i];
+					for (var i = 1, tmp; i >= 0; --i) {
+						tmp = cache[index - i];
 						cache[index - i] = cache[length - i - 1];
-						cache[length - i - 1] = temp;
+						cache[length - i - 1] = tmp;
 					}
 				}
 
@@ -262,13 +261,36 @@
 			};
 
 			this.filter = function(callback, options) {
-				for (var i = 0, l = cache.length, key; i < l; i += 2) {
+				for (var i = 0, l = cache.length, key, swap1, swap2, tmp; i < l;) {
 					key = cache[i];
 
 					if (!callback(key, this.get(key, options))) {
-						cache.splice(i, 2);
-						i -= 2, l -= 2;
+						for (var j = 0; j < 2; ++j) {
+							swap1 = i + j;
+							swap2 = l - 2 + j;
+
+							tmp = cache[swap1];
+							cache[swap1] = cache[swap2];
+							cache[swap2] = tmp;
+						}
+
+						l = cache.length -= 2;
+
+						for (var _j = i, m = l - 2; _j < m; _j += 2) {
+							for (var k = 0; k < 2; ++k) {
+								swap1 = _j + k;
+								swap2 = swap1 + 2;
+
+								tmp = cache[swap1];
+								cache[swap1] = cache[swap2];
+								cache[swap2] = tmp;
+							}
+						}
+
+						continue;
 					}
+
+					i += 2;
 				}
 			};
 
