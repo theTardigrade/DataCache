@@ -66,7 +66,9 @@
 
 		var ERROR_MAKER_OPT_PROPERTY = 1,
 			ERROR_MAKER_OPT_NEGATED = 2,
-			ERROR_MAKER_OPT_ALTERNATIVES = 4;
+			ERROR_MAKER_OPT_ALTERNATIVES = 4,
+			ERROR_MAKER_OPT_ONE_MAX = 8,
+			ERROR_MAKER_OPT_CONTAIN = 16;
 
 		var search = function(cacheArray, key) {
 			var lowerBound = 0,
@@ -141,20 +143,21 @@
 			return str;
 		};
 
-		var errorMaker = function(thing, predicative, bitmaskOptions, constructor) {
+		var errorMaker = function(thing, predicative, bitmaskOptions, ConstructorFunc) {
 			var msg = (bitmaskOptions & ERROR_MAKER_OPT_PROPERTY ? "Property [" + thing + "]" : thing)
 				+ " " + (bitmaskOptions & ERROR_MAKER_OPT_NEGATED ? "cannot" : "must")
-				+ " be " + (
+				+ " " + (bitmaskOptions & ERROR_MAKER_OPT_CONTAIN ? "contain" : "be")
+				+ " " + (bitmaskOptions & ERROR_MAKER_OPT_ONE_MAX ? "more than " : "") + (
 					bitmaskOptions & ERROR_MAKER_OPT_ALTERNATIVES
 					? "one of the following: "
 					+ arrayToHumanString(predicative, ARRAY_TO_HUMAN_STRING_OPT_ALTERNATIVES)
 					: predicative)
 				+ ".",
-				isConstructorValid = typeof constructor === FUNCTION_TYPE
-				&& typeof constructor.name === STRING_TYPE
-				&& constructor.name.slice(-5) === "Error";
+				isConstructorValid = typeof ConstructorFunc === FUNCTION_TYPE
+				&& typeof ConstructorFunc.name === STRING_TYPE
+				&& ConstructorFunc.name.slice(-5) === "Error";
 
-			return new(isConstructorValid ? constructor : Error)(msg);
+			return new(isConstructorValid ? ConstructorFunc : Error)(msg);
 		};
 
 		var assignObject = function(target) {
@@ -214,8 +217,12 @@
 						for (var _i = 0, setOnlyOptionCount = 0, _l = onlyOptionNames.length; _i < _l; ++_i) {
 							if (options[onlyOptionNames[_i]]) {
 								if (setOnlyOptionCount++)
-									throw new Error("The " + arrayToHumanString(onlyOptionNames) +
-										" options are mutually contradictory.");
+									throw errorMaker(
+										"Options",
+										onlyOptionNames,
+										ERROR_MAKER_OPT_ONE_MAX | ERROR_MAKER_OPT_NEGATED
+										| ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_CONTAIN);
+
 								value = value[onlyPropertyNames[_i]];
 							}
 						}

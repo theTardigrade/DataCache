@@ -53,7 +53,7 @@ let deepFreeze = (object) => {
 		O.freeze(object);
 	};
 
-// polyfill for ES6 Array.isArray method
+// polyfill of Array.isArray
 let isArray = (thing) => {
 		return (EXISTS.isArray)
 			? A.isArray(thing)
@@ -78,21 +78,22 @@ let arrayToHumanString = (array, bitmaskOptions) => {
 		return str;
 	};
 
-// used to generate appropriate constructors
-let errorMaker = (thing, predicative, bitmaskOptions, constructor) => {
+// used to generate appropriate error instances and messages
+let errorMaker = (thing, predicative, bitmaskOptions, ConstructorFunc) => {
 		let msg = ((bitmaskOptions & ERROR_MAKER_OPT_PROPERTY) ? "Property [" + thing + "]" : thing)
 				+ " " + ((bitmaskOptions & ERROR_MAKER_OPT_NEGATED) ? "cannot" : "must")
-				+ " be "
+				+ " " + ((bitmaskOptions & ERROR_MAKER_OPT_CONTAIN) ? "contain" : "be")
+				+ " " +((bitmaskOptions & ERROR_MAKER_OPT_ONE_MAX) ? "more than " : "")
 				+ ((bitmaskOptions & ERROR_MAKER_OPT_ALTERNATIVES)
 					? "one of the following: "
 						+ arrayToHumanString(predicative, ARRAY_TO_HUMAN_STRING_OPT_ALTERNATIVES)
 					: predicative)
 				+ ".",
-			isConstructorValid = (typeof constructor === FUNCTION_TYPE
-				&& typeof constructor.name === STRING_TYPE
-				&& constructor.name.slice(-5) === "Error");
+			isConstructorValid = (typeof ConstructorFunc === FUNCTION_TYPE
+				&& typeof ConstructorFunc.name === STRING_TYPE
+				&& ConstructorFunc.name.slice(-5) === "Error");
 
-		return new ((isConstructorValid) ? constructor : Error)(msg);
+		return new ((isConstructorValid) ? ConstructorFunc : Error)(msg);
 	};
 
 // polyfill of Object.assign

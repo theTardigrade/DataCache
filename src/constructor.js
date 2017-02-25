@@ -36,7 +36,13 @@ function DataCache(options) {
 				for (let i = 0, setOnlyOptionCount = 0, l = onlyOptionNames.length; i < l; ++i) {
 					if (options[onlyOptionNames[i]]) {
 						if (setOnlyOptionCount++)
-							throw new Error(`The ${ arrayToHumanString(onlyOptionNames) } options are mutually contradictory.`);
+							throw errorMaker(
+								"Options",
+								onlyOptionNames,
+								ERROR_MAKER_OPT_ONE_MAX | ERROR_MAKER_OPT_NEGATED
+									| ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_CONTAIN
+							);
+
 						value = value[onlyPropertyNames[i]];
 					}
 				}
