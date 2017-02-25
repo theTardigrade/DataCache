@@ -11,8 +11,8 @@ const plugins = ((keys) => {
     })([
 		"babel",
 		"beautify",
+		"concat",
 		"optimize-js",
-		"rename",
 		"replace",
 		"strip-comments",
 		"uglify",
@@ -21,8 +21,15 @@ const plugins = ((keys) => {
 
 gulp.task("script", () => {
 
-    let getSrc = () => {
-			return gulp.src(path.join(__dirname, "src", "DataCache.js"))
+	const SRC_PATHS = [
+                    "constants",
+                    "helpers",
+                    "constructor"
+                ].map((s) => path.join(__dirname, "src", s + ".js"));
+
+    let getSrc = (name) => {
+			return gulp.src(SRC_PATHS)
+				.pipe(plugins.concat(name + ".js"))
 				.pipe(plugins.wrap({
 					src: path.join(__dirname, "src", "IIFE.tmpl.js")
 				}))
@@ -37,14 +44,13 @@ gulp.task("script", () => {
 		};
 
 	// minified
-	getSrc()
+	getSrc("DataCache.min")
 		.pipe(plugins.uglify())
 		.pipe(plugins["optimize-js"]())
-		.pipe(plugins.rename("DataCache.min.js"))
         .pipe(gulp.dest(path.join(__dirname, "build")));
 
 	// non-minified, but commentless
-	getSrc()
+	getSrc("DataCache")
 		.pipe(plugins["strip-comments"]())
 		.pipe(plugins["replace"](/\n{3,}/g, "\n\n"))
 		.pipe(plugins.beautify({
