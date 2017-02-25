@@ -117,11 +117,16 @@
 			O.freeze(object);
 		};
 
+		var isArray = function(thing) {
+			return EXISTS.isArray
+				? A.isArray(thing)
+				: O.prototype.toString.call(thing) === "[object Array]";
+		};
+
 		var arrayToHumanString = function(array, bitmaskOptions) {
 			var str = "";
 
-			if (EXISTS.isArray ? A.isArray(array) : O.prototype.toString.call(array) ===
-				"[object Array]") {
+			if (isArray(array)) {
 				for (var i = 0, l = array.length, tmp; i < l; ++i) {
 					tmp = "\"" + array[i].toString() + "\"";
 					str += i < l - 2
@@ -146,8 +151,8 @@
 					: predicative)
 				+ ".",
 				isConstructorValid = typeof constructor === FUNCTION_TYPE
-				|| typeof constructor.name === STRING_TYPE
-				|| constructor.name.slice(-5) === "Error";
+				&& typeof constructor.name === STRING_TYPE
+				&& constructor.name.slice(-5) === "Error";
 
 			return new(isConstructorValid ? constructor : Error)(msg);
 		};
@@ -162,10 +167,8 @@
 
 			if (target == null)
 				throw errorMaker(
-					"Target object", [UNDEFINED_TYPE, "null"], {
-						negated: true,
-						alternatives: true
-					});
+					"Target object", [UNDEFINED_TYPE, "null"],
+					ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_NEGATED);
 
 			var t = O(target);
 

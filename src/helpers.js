@@ -53,11 +53,18 @@ let deepFreeze = (object) => {
 		O.freeze(object);
 	};
 
+// polyfill for ES6 Array.isArray method
+let isArray = (thing) => {
+		return (EXISTS.isArray)
+			? A.isArray(thing)
+			: O.prototype.toString.call(thing) === "[object Array]";
+	};
+
 // return the contents of an array in English human-readable form
 let arrayToHumanString = (array, bitmaskOptions) => {
 		let str = "";
 
-		if ((EXISTS.isArray) ? A.isArray(array) : O.prototype.toString.call(array) === "[object Array]") {
+		if (isArray(array)) {
 			for (let i = 0, l = array.length, tmp; i < l; ++i) {
 				tmp = "\"" + array[i].toString() + "\"";
 				str += (i < l - 2)
@@ -82,8 +89,8 @@ let errorMaker = (thing, predicative, bitmaskOptions, constructor) => {
 					: predicative)
 				+ ".",
 			isConstructorValid = (typeof constructor === FUNCTION_TYPE
-				|| typeof constructor.name === STRING_TYPE
-				|| constructor.name.slice(-5) === "Error");
+				&& typeof constructor.name === STRING_TYPE
+				&& constructor.name.slice(-5) === "Error");
 
 		return new ((isConstructorValid) ? constructor : Error)(msg);
 	};
@@ -97,7 +104,7 @@ let assignObject = (target, ...sources) => {
 			throw errorMaker(
 				"Target object",
 				[UNDEFINED_TYPE, "null"],
-				{ negated: true, alternatives: true }
+				ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_NEGATED
 			);
 
 		let t = O(target);
