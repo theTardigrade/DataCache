@@ -60,17 +60,17 @@
 	var MAX_ARRAY_LENGTH = (1 << 16) * (1 << 16) - 1,
 		MAX_CAPACITY = M.floor(MAX_ARRAY_LENGTH / 2);
 
-	var NO_OPT = 0;
+	var HELPER_NO_OPTION = 0;
 
-	var ARRAY_TO_HUMAN_STRING_OPT_ALTERNATIVES = 1;
+	var HELPER_ARRAY_TO_HUMAN_STRING_OPTION_ALTERNATIVES = 1;
 
-	var ERROR_MAKER_OPT_PROPERTY = 1,
-		ERROR_MAKER_OPT_NEGATED = 2,
-		ERROR_MAKER_OPT_ALTERNATIVES = 4,
-		ERROR_MAKER_OPT_ONE_MAX = 8,
-		ERROR_MAKER_OPT_CONTAIN = 16;
+	var HELPER_ERROR_MAKER_OPTION_PROPERTY = 1,
+		HELPER_ERROR_MAKER_OPTION_NEGATED = 2,
+		HELPER_ERROR_MAKER_OPTION_ALTERNATIVES = 4,
+		HELPER_ERROR_MAKER_OPTION_ONE_MAX = 8,
+		HELPER_ERROR_MAKER_OPTION_CONTAIN = 16;
 
-	var GET_CURRENT_TIMESTAMP_OPT_SECONDS = 1;
+	var HELPER_GET_CURRENT_TIMESTAMP_OPTION_SECONDS = 1;
 
 	var helper_search = function(cacheArray, key) {
 		var lowerBound = 0,
@@ -142,8 +142,11 @@
 					? tmp + ", "
 					: i < l - 1
 					? tmp
-					: " " + (bitmaskOptions & ARRAY_TO_HUMAN_STRING_OPT_ALTERNATIVES ? "or" : "and") + " " +
-					tmp;
+					: " " + (
+						bitmaskOptions & HELPER_ARRAY_TO_HUMAN_STRING_OPTION_ALTERNATIVES
+						? "or"
+						: "and")
+					+ " " + tmp;
 			}
 		}
 
@@ -151,13 +154,14 @@
 	};
 
 	var helper_errorMaker = function(thing, predicative, bitmaskOptions, ConstructorFunc) {
-		var msg = (bitmaskOptions & ERROR_MAKER_OPT_PROPERTY ? "Property [" + thing + "]" : thing)
-			+ " " + (bitmaskOptions & ERROR_MAKER_OPT_NEGATED ? "cannot" : "must")
-			+ " " + (bitmaskOptions & ERROR_MAKER_OPT_CONTAIN ? "contain" : "be")
-			+ " " + (bitmaskOptions & ERROR_MAKER_OPT_ONE_MAX ? "more than " : "") + (
-				bitmaskOptions & ERROR_MAKER_OPT_ALTERNATIVES
+		var msg = (bitmaskOptions & HELPER_ERROR_MAKER_OPTION_PROPERTY ? "Property [" + thing + "]"
+				: thing)
+			+ " " + (bitmaskOptions & HELPER_ERROR_MAKER_OPTION_NEGATED ? "cannot" : "must")
+			+ " " + (bitmaskOptions & HELPER_ERROR_MAKER_OPTION_CONTAIN ? "contain" : "be")
+			+ " " + (bitmaskOptions & HELPER_ERROR_MAKER_OPTION_ONE_MAX ? "more than " : "") + (
+				bitmaskOptions & HELPER_ERROR_MAKER_OPTION_ALTERNATIVES
 				? "one of the following: "
-				+ helper_arrayToHumanString(predicative, ARRAY_TO_HUMAN_STRING_OPT_ALTERNATIVES)
+				+ helper_arrayToHumanString(predicative, HELPER_ARRAY_TO_HUMAN_STRING_OPTION_ALTERNATIVES)
 				: predicative)
 			+ ".",
 			isConstructorValid = typeof ConstructorFunc === FUNCTION_TYPE
@@ -181,7 +185,7 @@
 			if (target == null)
 				throw helper_errorMaker(
 					"Target object", [UNDEFINED_TYPE, NULL_NAME],
-					ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_NEGATED,
+					HELPER_ERROR_MAKER_OPTION_ALTERNATIVES | HELPER_ERROR_MAKER_OPTION_NEGATED,
 					TypeError);
 
 			var t = O(target);
@@ -207,7 +211,7 @@
 		return function(bitmaskOptions) {
 			var timestamp = (nativeKeyExists ? D[nativeKey] : new D().getTime)();
 
-			return bitmaskOptions & GET_CURRENT_TIMESTAMP_OPT_SECONDS
+			return bitmaskOptions & HELPER_GET_CURRENT_TIMESTAMP_OPTION_SECONDS
 				? M.round(timestamp / 1e3)
 				: timestamp;
 		};
@@ -250,8 +254,8 @@
 								throw helper_errorMaker(
 									"Options",
 									onlyOptionNames,
-									ERROR_MAKER_OPT_ONE_MAX | ERROR_MAKER_OPT_NEGATED
-									| ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_CONTAIN);
+									HELPER_ERROR_MAKER_OPTION_ONE_MAX | HELPER_ERROR_MAKER_OPTION_NEGATED
+									| HELPER_ERROR_MAKER_OPTION_ALTERNATIVES | HELPER_ERROR_MAKER_OPTION_CONTAIN);
 
 							value = value[onlyPropertyNames[_i]];
 						}
@@ -271,11 +275,12 @@
 				setDefinedProperty("keyType", typeof key);
 
 			if (typeof key !== privateKeyType)
-				throw helper_errorMaker("Key", "a " + privateKeyType, NO_OPT, TypeError);
+				throw helper_errorMaker("Key", "a " + privateKeyType, HELPER_NO_OPTION, TypeError);
 
 			if (data == null)
-				throw helper_errorMaker("Data", [UNDEFINED_TYPE, NULL_NAME],
-					ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_NEGATED,
+				throw helper_errorMaker(
+					"Data", [UNDEFINED_TYPE, NULL_NAME],
+					HELPER_ERROR_MAKER_OPTION_ALTERNATIVES | HELPER_ERROR_MAKER_OPTION_NEGATED,
 					TypeError);
 
 			var index = helper_search(cache, key);
@@ -447,7 +452,7 @@
 					var error = helper_errorMaker(
 						propertyName,
 						ALLOWABLE_KEY_TYPES,
-						ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_PROPERTY,
+						HELPER_ERROR_MAKER_OPTION_ALTERNATIVES | HELPER_ERROR_MAKER_OPTION_PROPERTY,
 						TypeError);
 
 					return function(keyType) {
@@ -505,7 +510,7 @@
 						return helper_errorMaker(
 							_propertyName2,
 							predicative,
-							ERROR_MAKER_OPT_PROPERTY | bitmaskOptions,
+							HELPER_ERROR_MAKER_OPTION_PROPERTY | bitmaskOptions,
 							constructor);
 
 					};
@@ -514,9 +519,10 @@
 						if (capacity === privateCapacity) {
 							return;
 						} else if (typeof capacity !== NUMBER_TYPE || isNaN(capacity)) {
-							throw capacityErrorMaker("a number (excluding NaN)", NO_OPT, TypeError);
+							throw capacityErrorMaker("a " + NUMBER_TYPE + " (excluding NaN)", HELPER_NO_OPTION,
+								TypeError);
 						} else if (capacity < 0) {
-							throw capacityErrorMaker("negative", ERROR_MAKER_OPT_NEGATED, RangeError);
+							throw capacityErrorMaker("negative", HELPER_ERROR_MAKER_OPTION_NEGATED, RangeError);
 						} else if (capacity < privateCapacity) {
 							var difference = M.min(privateCapacity, _this.size) - capacity;
 
@@ -553,7 +559,7 @@
 						return helper_errorMaker(
 							_propertyName3,
 							predicative,
-							ERROR_MAKER_OPT_PROPERTY | bitmaskOptions,
+							HELPER_ERROR_MAKER_OPTION_PROPERTY | bitmaskOptions,
 							constructor);
 
 					};
@@ -562,9 +568,10 @@
 						if (maxAge === privateMaxAge) {
 							return;
 						} else if (typeof maxAge !== NUMBER_TYPE || isNaN(maxAge)) {
-							throw maxAgeErrorMaker("a number of milliseconds", NO_OPT, TypeError);
+							throw maxAgeErrorMaker("a " + NUMBER_TYPE + " of milliseconds", HELPER_NO_OPTION,
+								TypeError);
 						} else if (maxAge < 0) {
-							throw maxAgeErrorMaker("negative", ERROR_MAKER_OPT_NEGATED, RangeError);
+							throw maxAgeErrorMaker("negative", HELPER_ERROR_MAKER_OPTION_NEGATED, RangeError);
 						}
 
 						privateMaxAge = maxAge;

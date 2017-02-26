@@ -44,8 +44,8 @@ function DataCache(options) {
 							throw helper_errorMaker(
 								"Options",
 								onlyOptionNames,
-								ERROR_MAKER_OPT_ONE_MAX | ERROR_MAKER_OPT_NEGATED
-									| ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_CONTAIN
+								HELPER_ERROR_MAKER_OPTION_ONE_MAX | HELPER_ERROR_MAKER_OPTION_NEGATED
+									| HELPER_ERROR_MAKER_OPTION_ALTERNATIVES | HELPER_ERROR_MAKER_OPTION_CONTAIN
 							);
 
 						value = value[onlyPropertyNames[i]];
@@ -66,12 +66,15 @@ function DataCache(options) {
 			setDefinedProperty("keyType", (typeof key));
 
 		if (typeof key !== privateKeyType)
-			throw helper_errorMaker("Key", "a " + privateKeyType, NO_OPT, TypeError);
+			throw helper_errorMaker("Key", "a " + privateKeyType, HELPER_NO_OPTION, TypeError);
 
 		if (data == null)
-			throw helper_errorMaker("Data", [UNDEFINED_TYPE, NULL_NAME],
-				ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_NEGATED,
-				TypeError);
+			throw helper_errorMaker(
+				"Data",
+				[UNDEFINED_TYPE, NULL_NAME],
+				HELPER_ERROR_MAKER_OPTION_ALTERNATIVES | HELPER_ERROR_MAKER_OPTION_NEGATED,
+				TypeError
+			);
 
 		let index = helper_search(cache, key);
 
@@ -252,7 +255,7 @@ function DataCache(options) {
 				let error = helper_errorMaker(
 						propertyName,
 						ALLOWABLE_KEY_TYPES,
-						ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_PROPERTY,
+						HELPER_ERROR_MAKER_OPTION_ALTERNATIVES | HELPER_ERROR_MAKER_OPTION_PROPERTY,
 						TypeError
 					);
 
@@ -305,7 +308,7 @@ function DataCache(options) {
 						return helper_errorMaker(
 							propertyName,
 							predicative,
-							ERROR_MAKER_OPT_PROPERTY | bitmaskOptions,
+							HELPER_ERROR_MAKER_OPTION_PROPERTY | bitmaskOptions,
 							constructor
 						);
 					};
@@ -314,9 +317,9 @@ function DataCache(options) {
 					if (capacity === privateCapacity) {
 						return;
 					} else if (typeof capacity !== NUMBER_TYPE || isNaN(capacity)) {
-						throw capacityErrorMaker("a number (excluding NaN)", NO_OPT, TypeError);
+						throw capacityErrorMaker("a " + NUMBER_TYPE + " (excluding NaN)", HELPER_NO_OPTION, TypeError);
 					} else if (capacity < 0) {
-						throw capacityErrorMaker("negative", ERROR_MAKER_OPT_NEGATED, RangeError);
+						throw capacityErrorMaker("negative", HELPER_ERROR_MAKER_OPTION_NEGATED, RangeError);
 					} else if (capacity < privateCapacity) {
 						let difference = M.min(privateCapacity, this.size) - capacity;
 
@@ -352,7 +355,7 @@ function DataCache(options) {
 						return helper_errorMaker(
 							propertyName,
 							predicative,
-							ERROR_MAKER_OPT_PROPERTY | bitmaskOptions,
+							HELPER_ERROR_MAKER_OPTION_PROPERTY | bitmaskOptions,
 							constructor
 						);
 					};
@@ -361,9 +364,9 @@ function DataCache(options) {
 					if (maxAge === privateMaxAge) {
 						return;
 					} else if (typeof maxAge !== NUMBER_TYPE || isNaN(maxAge)) {
-						throw maxAgeErrorMaker("a number of milliseconds", NO_OPT, TypeError);
+						throw maxAgeErrorMaker("a " + NUMBER_TYPE + " of milliseconds", HELPER_NO_OPTION, TypeError);
 					} else if (maxAge < 0) {
-						throw maxAgeErrorMaker("negative", ERROR_MAKER_OPT_NEGATED, RangeError);
+						throw maxAgeErrorMaker("negative", HELPER_ERROR_MAKER_OPTION_NEGATED, RangeError);
 					}
 
 					privateMaxAge = maxAge;

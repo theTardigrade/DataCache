@@ -76,7 +76,11 @@ let helper_arrayToHumanString = (array, bitmaskOptions) => {
 					? tmp + ", "
 					: (i < l - 1)
 						? tmp
-						: " " + ((bitmaskOptions & ARRAY_TO_HUMAN_STRING_OPT_ALTERNATIVES) ? "or" : "and") + " " + tmp;
+						: " "
+							+ ((bitmaskOptions & HELPER_ARRAY_TO_HUMAN_STRING_OPTION_ALTERNATIVES)
+								? "or"
+								: "and")
+							+ " " + tmp;
 			}
 		}
 
@@ -85,13 +89,13 @@ let helper_arrayToHumanString = (array, bitmaskOptions) => {
 
 // used to generate appropriate error instances and messages
 let helper_errorMaker = (thing, predicative, bitmaskOptions, ConstructorFunc) => {
-		let msg = ((bitmaskOptions & ERROR_MAKER_OPT_PROPERTY) ? "Property [" + thing + "]" : thing)
-				+ " " + ((bitmaskOptions & ERROR_MAKER_OPT_NEGATED) ? "cannot" : "must")
-				+ " " + ((bitmaskOptions & ERROR_MAKER_OPT_CONTAIN) ? "contain" : "be")
-				+ " " +((bitmaskOptions & ERROR_MAKER_OPT_ONE_MAX) ? "more than " : "")
-				+ ((bitmaskOptions & ERROR_MAKER_OPT_ALTERNATIVES)
+		let msg = ((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_PROPERTY) ? "Property [" + thing + "]" : thing)
+				+ " " + ((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_NEGATED) ? "cannot" : "must")
+				+ " " + ((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_CONTAIN) ? "contain" : "be")
+				+ " " +((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_ONE_MAX) ? "more than " : "")
+				+ ((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_ALTERNATIVES)
 					? "one of the following: "
-						+ helper_arrayToHumanString(predicative, ARRAY_TO_HUMAN_STRING_OPT_ALTERNATIVES)
+						+ helper_arrayToHumanString(predicative, HELPER_ARRAY_TO_HUMAN_STRING_OPTION_ALTERNATIVES)
 					: predicative)
 				+ ".",
 			isConstructorValid = (typeof ConstructorFunc === FUNCTION_TYPE
@@ -113,7 +117,7 @@ let helper_assignObject = (() => {
 				throw helper_errorMaker(
 					"Target object",
 					[UNDEFINED_TYPE, NULL_NAME],
-					ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_NEGATED,
+					HELPER_ERROR_MAKER_OPTION_ALTERNATIVES | HELPER_ERROR_MAKER_OPTION_NEGATED,
 					TypeError
 				);
 
@@ -139,7 +143,7 @@ let helper_getCurrentTimestamp = (() => {
 		return (bitmaskOptions) => {
 			let timestamp = ((nativeKeyExists) ? D[nativeKey] : new D().getTime)();
 
-			return (bitmaskOptions & GET_CURRENT_TIMESTAMP_OPT_SECONDS)
+			return (bitmaskOptions & HELPER_GET_CURRENT_TIMESTAMP_OPTION_SECONDS)
 				? M.round(timestamp / 1e3)
 				: timestamp;
 		};
