@@ -218,7 +218,7 @@
 
 	function DataCache(options) {
 		var _this = this;
-		var cache = this._debugCache = [];
+		var privateCache = this._debugCache = [];
 
 		this.get = (function() {
 			var onlyPropertyNames = ["data", "metadata"],
@@ -234,12 +234,12 @@
 				if (typeof key !== privateKeyType)
 					return value;
 
-				var index = helper_search(cache, key);
+				var index = helper_search(privateCache, key);
 
 				if (index === -1)
 					return value;
 
-				value = cache[index];
+				value = privateCache[index];
 
 				if (helper_getCurrentTimestamp() - value.metadata.updated > privateMaxAge) {
 					this.unset(key);
@@ -266,7 +266,7 @@
 		})();
 
 		this.has = function(key) {
-			return typeof key === privateKeyType && helper_search(cache, key) > -1;
+			return typeof key === privateKeyType && helper_search(privateCache, key) > -1;
 		};
 
 		this.set = function(key, data) {
@@ -286,10 +286,10 @@
 					HELPER_ERROR_MAKER_OPTION_ALTERNATIVES | HELPER_ERROR_MAKER_OPTION_NEGATED,
 					TypeError);
 
-			var index = helper_search(cache, key);
+			var index = helper_search(privateCache, key);
 
 			if (index === -1)
-				index = cache.length + 1;
+				index = privateCache.length + 1;
 
 			if (index >= privateCapacity * 2)
 				index = getDefinedProperty("_oldestIndex");
@@ -300,22 +300,20 @@
 
 				metadata = object.metadata = {
 					updated: helper_getCurrentTimestamp()
-				},
+				};
 
-				cachedMetadata = cache[index] && cache[index].metadata && typeof cache[index].metadata.created
-				=== NUMBER_TYPE
-				? cache[index].metadata
-				: metadata;
-
-			metadata.created = cachedMetadata.created || cachedMetadata.updated;
+			metadata.created = privateCache[index] && privateCache[index].metadata && typeof privateCache[
+					index].metadata.created === NUMBER_TYPE
+				? privateCache[index].metadata.created
+				: metadata.updated;
 
 			if (EXISTS.freeze)
 				helper_deepFreeze(object);
 
-			cache[index - 1] = key;
-			cache[index] = object;
+			privateCache[index - 1] = key;
+			privateCache[index] = object;
 
-			helper_sort(cache);
+			helper_sort(privateCache);
 			return object;
 		};
 
@@ -325,37 +323,37 @@
 			if (typeof key !== privateKeyType)
 				return value;
 
-			var index = helper_search(cache, key),
-				length = cache.length;
+			var index = helper_search(privateCache, key),
+				length = privateCache.length;
 
 			if (index === -1)
 				return value;
 
 			if (length > 2) {
 				for (var i = 1, tmp; i >= 0; --i) {
-					tmp = cache[index - i];
-					cache[index - i] = cache[length - i - 1];
-					cache[length - i - 1] = tmp;
+					tmp = privateCache[index - i];
+					privateCache[index - i] = privateCache[length - i - 1];
+					privateCache[length - i - 1] = tmp;
 				}
 			}
 
-			value = cache.pop();
-			cache.pop();
+			value = privateCache.pop();
+			privateCache.pop();
 
-			helper_sort(cache);
+			helper_sort(privateCache);
 			return value;
 		};
 
-		this.clean = function() {
-			for (var i = 1, l = cache.length; i < l; i += 2) {
-				if (helper_getCurrentTimestamp() - cache[i].metadata.updated > privateMaxAge)
-					this.unset(cache[i - 1]);
+		this.collectGarbage = function() {
+			for (var i = 1, l = privateCache.length; i < l; i += 2) {
+				if (helper_getCurrentTimestamp() - privateCache[i].metadata.updated > privateMaxAge)
+					this.unset(privateCache[i - 1]);
 			}
 		};
 
 		this.iterate = function(callback, options) {
-			for (var i = 0, l = cache.length, key, value; i < l; i += 2) {
-				key = cache[i];
+			for (var i = 0, l = privateCache.length, key, value; i < l; i += 2) {
+				key = privateCache[i];
 				value = this.get(key, options);
 
 				if (value !== null)
@@ -366,8 +364,8 @@
 		this.map = function(callback, options) {
 			var returnsFullObject = !options || !options.dataOnly;
 
-			for (var i = 0, l = cache.length, key, value, newValue; i < l; i += 2) {
-				key = cache[i];
+			for (var i = 0, l = privateCache.length, key, value, newValue; i < l; i += 2) {
+				key = privateCache[i];
 				value = this.get(key, options);
 
 				if (value !== null) {
@@ -379,8 +377,8 @@
 		};
 
 		this.filter = function(callback, options) {
-			for (var i = 0, l = cache.length, key, value, swap1, swap2, tmp; i < l;) {
-				key = cache[i];
+			for (var i = 0, l = privateCache.length, key, value, swap1, swap2, tmp; i < l;) {
+				key = privateCache[i];
 				value = this.get(key, options);
 
 				if (value !== null && !callback(key, this.get(key, options))) {
@@ -388,21 +386,21 @@
 						swap1 = i + j;
 						swap2 = l - 2 + j;
 
-						tmp = cache[swap1];
-						cache[swap1] = cache[swap2];
-						cache[swap2] = tmp;
+						tmp = privateCache[swap1];
+						privateCache[swap1] = privateCache[swap2];
+						privateCache[swap2] = tmp;
 					}
 
-					l = cache.length -= 2;
+					l = privateCache.length -= 2;
 
 					for (var _j = i, m = l - 2; _j < m; _j += 2) {
 						for (var k = 0; k < 2; ++k) {
 							swap1 = _j + k;
 							swap2 = swap1 + 2;
 
-							tmp = cache[swap1];
-							cache[swap1] = cache[swap2];
-							cache[swap2] = tmp;
+							tmp = privateCache[swap1];
+							privateCache[swap1] = privateCache[swap2];
+							privateCache[swap2] = tmp;
 						}
 					}
 
@@ -414,7 +412,7 @@
 		};
 
 		this.clear = function() {
-			cache = [];
+			privateCache = [];
 		};
 
 		var getFallbackDefinedPropertyName = function(prefix, prop) {
@@ -469,11 +467,11 @@
 						if (keyType === privateKeyType && keyType !== null)
 							return;
 
-						if (ALLOWABLE_KEY_TYPES.includes(keyType))
-							privateKeyType = keyType;
-						else
-
+						if (!ALLOWABLE_KEY_TYPES.includes(keyType))
 							throw error;
+
+						_this.clear();
+						privateKeyType = keyType;
 					};
 				})()
 			});
@@ -487,20 +485,10 @@
 
 			definePropertyHere(_propertyName, {
 				get: function() {
-					var l = cache.length;
+					if (privateMaxAge < global.Infinity)
+						_this.clean();
 
-					if (l && privateMaxAge < global.Infinity) {
-						var total = 0;
-
-						for (var i = 1; i < l; i += 2) {
-							if (helper_getCurrentTimestamp() - cache[i].metadata.updated <= privateMaxAge)
-								++total;
-						}
-
-						return total;
-					}
-
-					return l / 2;
+					return privateCache.length / 2;
 				},
 				set: function(size) {
 					if (size >= getDefinedProperty(_propertyName))
@@ -551,7 +539,7 @@
 
 							for (var i = 0; i < difference; ++i) {
 								var index = getDefinedProperty("_oldestIndex");
-								_this.unset(cache[index - 1]);
+								_this.unset(privateCache[index - 1]);
 							}
 						}
 
@@ -611,9 +599,9 @@
 				var index = 1,
 					updated = N.MAX_VALUE || global.Infinity;
 
-				for (var i = index, l = cache.length; i < l; i += 2) {
-					if (cache[i].metadata.updated < updated) {
-						updated = cache[i].metadata.updated;
+				for (var i = index, l = privateCache.length; i < l; i += 2) {
+					if (privateCache[i].metadata.updated < updated) {
+						updated = privateCache[i].metadata.updated;
 						index = i;
 					}
 				}

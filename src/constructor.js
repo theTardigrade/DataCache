@@ -8,7 +8,7 @@
 */
 
 function DataCache(options) {
-	let cache = this._debugCache = [];
+	let privateCache = this._debugCache = [];
 
 	/* public functions */
 
@@ -25,12 +25,12 @@ function DataCache(options) {
 			if (typeof key !== privateKeyType)
 				return value;
 
-			let index = helper_search(cache, key);
+			let index = helper_search(privateCache, key);
 
 			if (index === -1)
 				return value;
 
-			value = cache[index];
+			value = privateCache[index];
 
 			if (helper_getCurrentTimestamp() - value.metadata.updated > privateMaxAge) {
 				this.unset(key);
@@ -58,7 +58,7 @@ function DataCache(options) {
 	})();
 
 	this.has = function(key) {
-		return (typeof key === privateKeyType && helper_search(cache, key) > -1);
+		return (typeof key === privateKeyType && helper_search(privateCache, key) > -1);
 	};
 
 	this.set = function(key, data) {
@@ -81,10 +81,10 @@ function DataCache(options) {
 				TypeError
 			);
 
-		let index = helper_search(cache, key);
+		let index = helper_search(privateCache, key);
 
 		if (index === -1)
-			index = cache.length + 1;
+			index = privateCache.length + 1;
 
 		// when capacity is reached, start writing over oldest data
 		// use double value to account for consecutive key-value pairs
@@ -96,12 +96,11 @@ function DataCache(options) {
 			},
 			metadata = object.metadata = {
 				updated: helper_getCurrentTimestamp()
-			},
-			cachedMetadata = (cache[index] && cache[index].metadata && typeof cache[index].metadata.created === NUMBER_TYPE)
-				? cache[index].metadata
-				: metadata;
+			};
 
-		metadata.created = cachedMetadata.created || cachedMetadata.updated;
+		metadata.created = (privateCache[index] && privateCache[index].metadata && typeof privateCache[index].metadata.created === NUMBER_TYPE)
+			? privateCache[index].metadata.created
+			: metadata.updated;
 
 		// use ECMAScript 5 freeze function to make objects immutable,
 		// therefore stored data and metadata can only be changed by
@@ -109,10 +108,10 @@ function DataCache(options) {
 		if (EXISTS.freeze)
 			helper_deepFreeze(object);
 
-		cache[index - 1] = key;
-		cache[index] = object;
+		privateCache[index - 1] = key;
+		privateCache[index] = object;
 
-		helper_sort(cache);
+		helper_sort(privateCache);
 		return object;
 	};
 
@@ -122,8 +121,8 @@ function DataCache(options) {
 		if (typeof key !== privateKeyType)
 			return value;
 
-		let index = helper_search(cache, key),
-			length = cache.length;
+		let index = helper_search(privateCache, key),
+			length = privateCache.length;
 
 		if (index === -1)
 			return value;
@@ -131,28 +130,28 @@ function DataCache(options) {
 		if (length > 2) {
 			// swap current indices with final two indices in order to pop
 			for (let i = 1, tmp; i >= 0; --i) {
-				tmp = cache[index - i];
-				cache[index - i] = cache[length - i - 1];
-				cache[length - i - 1] = tmp;
+				tmp = privateCache[index - i];
+				privateCache[index - i] = privateCache[length - i - 1];
+				privateCache[length - i - 1] = tmp;
 			}
 		}
 
-		value = cache.pop();
-		cache.pop();
+		value = privateCache.pop();
+		privateCache.pop();
 
-		helper_sort(cache);
+		helper_sort(privateCache);
 		return value;
 	};
 
-	this.clean = function() {
-		for (let i = 1, l = cache.length; i < l; i += 2)
-			if (helper_getCurrentTimestamp() - cache[i].metadata.updated > privateMaxAge)
-				this.unset(cache[i - 1]);
+	this.collectGarbage = function() {
+		for (let i = 1, l = privateCache.length; i < l; i += 2)
+			if (helper_getCurrentTimestamp() - privateCache[i].metadata.updated > privateMaxAge)
+				this.unset(privateCache[i - 1]);
 	};
 
 	this.iterate = function(callback, options) {
-		for (let i = 0, l = cache.length, key, value; i < l; i += 2) {
-			key = cache[i];
+		for (let i = 0, l = privateCache.length, key, value; i < l; i += 2) {
+			key = privateCache[i];
 			value = this.get(key, options);
 
 			if (value !== null)
@@ -163,8 +162,8 @@ function DataCache(options) {
 	this.map = function(callback, options) {
 		let returnsFullObject = (!options || !options.dataOnly);
 
-		for (let i = 0, l = cache.length, key, value, newValue; i < l; i += 2) {
-			key = cache[i];
+		for (let i = 0, l = privateCache.length, key, value, newValue; i < l; i += 2) {
+			key = privateCache[i];
 			value = this.get(key, options);
 
 			if (value !== null) {
@@ -176,8 +175,8 @@ function DataCache(options) {
 	};
 
 	this.filter = function(callback, options) {
-		for (let i = 0, l = cache.length, key, value, swap1, swap2, tmp; i < l; /* empty */) {
-			key = cache[i];
+		for (let i = 0, l = privateCache.length, key, value, swap1, swap2, tmp; i < l; /* empty */) {
+			key = privateCache[i];
 			value = this.get(key, options);
 
 			if (value !== null && !callback(key, this.get(key, options))) {
@@ -186,13 +185,13 @@ function DataCache(options) {
 					swap1 = i + j;
 					swap2 = l - 2 + j;
 
-					tmp = cache[swap1];
-					cache[swap1] = cache[swap2];
-					cache[swap2] = tmp;
+					tmp = privateCache[swap1];
+					privateCache[swap1] = privateCache[swap2];
+					privateCache[swap2] = tmp;
 				}
 
 				// pop the moved indices, by shrinking the length
-				l = (cache.length -= 2);
+				l = (privateCache.length -= 2);
 
 				// move swapped indices back to the end of the array, therefore sorted
 				for (let j = i, m = l - 2; j < m; j += 2) {
@@ -200,9 +199,9 @@ function DataCache(options) {
 						swap1 = j + k;
 						swap2 = swap1 + 2;
 
-						tmp = cache[swap1];
-						cache[swap1] = cache[swap2];
-						cache[swap2] = tmp;
+						tmp = privateCache[swap1];
+						privateCache[swap1] = privateCache[swap2];
+						privateCache[swap2] = tmp;
 					}
 				}
 
@@ -216,7 +215,7 @@ function DataCache(options) {
 	};
 
 	this.clear = () => {
-		cache = [];
+		privateCache = [];
 	};
 
 	/* initialize getters and setters, including fallback for environments without native support */
@@ -274,10 +273,11 @@ function DataCache(options) {
 					if (keyType === privateKeyType && keyType !== null)
 						return;
 
-					if (ALLOWABLE_KEY_TYPES.includes(keyType))
-						privateKeyType = keyType;
-					else
+					if (!ALLOWABLE_KEY_TYPES.includes(keyType))
 						throw error;
+
+					this.clear();
+					privateKeyType = keyType;
 				};
 			})()
 		});
@@ -292,19 +292,10 @@ function DataCache(options) {
 
 		definePropertyHere(propertyName, {
 			get: () => {
-				let l = cache.length;
+				if (privateMaxAge < global.Infinity)
+					this.clean();
 
-				if (l && privateMaxAge < global.Infinity) {
-					let total = 0;
-
-					for (let i = 1; i < l; i += 2)
-						if (helper_getCurrentTimestamp() - cache[i].metadata.updated <= privateMaxAge)
-							++total;
-
-					return total;
-				}
-
-				return l / 2;
+				return privateCache.length / 2;
 			},
 			set: (size) => {
 				if (size >= getDefinedProperty(propertyName))
@@ -351,7 +342,7 @@ function DataCache(options) {
 
 						for (let i = 0; i < difference; ++i) {
 							let index = getDefinedProperty("_oldestIndex");
-							this.unset(cache[index - 1]);
+							this.unset(privateCache[index - 1]);
 						}
 					}
 
@@ -412,9 +403,9 @@ function DataCache(options) {
 			let index = 1,
 				updated = N.MAX_VALUE || global.Infinity;
 
-			for (let i = index, l = cache.length; i < l; i += 2) {
-				if (cache[i].metadata.updated < updated) {
-					updated = cache[i].metadata.updated;
+			for (let i = index, l = privateCache.length; i < l; i += 2) {
+				if (privateCache[i].metadata.updated < updated) {
+					updated = privateCache[i].metadata.updated;
 					index = i;
 				}
 			}
