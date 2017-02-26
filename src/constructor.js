@@ -382,7 +382,7 @@ function DataCache(options) {
 		});
 
 		if (options && typeof options[propertyName] !== UNDEFINED_TYPE)
-			setDefinedProperty(propertyName, options.maxAge);
+			setDefinedProperty(propertyName, options[propertyName]);
 	}
 
 	/* private getters and setters */

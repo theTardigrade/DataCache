@@ -583,7 +583,7 @@
 			});
 
 			if (options && typeof options[_propertyName3] !== UNDEFINED_TYPE)
-				setDefinedProperty(_propertyName3, options.maxAge);
+				setDefinedProperty(_propertyName3, options[_propertyName3]);
 		}
 
 		definePropertyHere("_oldestIndex", {
