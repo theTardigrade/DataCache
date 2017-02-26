@@ -1,3 +1,6 @@
+/* general constants */
+
+
 // return values of typeof function on various types
 // for use in comparisons and conditionals
 const OBJECT_TYPE = "object",
@@ -26,6 +29,10 @@ const EXISTS = ((data) => {
 		{ key: "isArray", object: A }
 	]);
 
+
+/* constructor specific constants */
+
+
 // cache key can be set to accept one of the following types
 const ALLOWABLE_KEY_TYPES = [
 		STRING_TYPE,
@@ -47,7 +54,9 @@ if (!EXISTS.includes) {
 const MAX_ARRAY_LENGTH = ((1 << 16) * (1 << 16)) - 1,
 	MAX_CAPACITY = M.floor(MAX_ARRAY_LENGTH / 2);
 
+
 /* bitmask options for helper functions */
+
 
 const HELPER_NO_OPTION = 0;
 
@@ -61,3 +70,4 @@ const HELPER_ERROR_MAKER_OPTION_PROPERTY = 1,
 	HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE = 32;
 
 const HELPER_GET_CURRENT_TIMESTAMP_OPTION_SECONDS = 1;
+

@@ -346,6 +346,13 @@
 			return value;
 		};
 
+		this.clean = function() {
+			for (var i = 1, l = cache.length; i < l; i += 2) {
+				if (helper_getCurrentTimestamp() - cache[i].metadata.updated > privateMaxAge)
+					this.unset(cache[i - 1]);
+			}
+		};
+
 		this.iterate = function(callback, options) {
 			for (var i = 0, l = cache.length, key, value; i < l; i += 2) {
 				key = cache[i];
@@ -480,7 +487,20 @@
 
 			definePropertyHere(_propertyName, {
 				get: function() {
-					return cache.length / 2;
+					var l = cache.length;
+
+					if (l && privateMaxAge < global.Infinity) {
+						var total = 0;
+
+						for (var i = 1; i < l; i += 2) {
+							if (helper_getCurrentTimestamp() - cache[i].metadata.updated <= privateMaxAge)
+								++total;
+						}
+
+						return total;
+					}
+
+					return l / 2;
 				},
 				set: function(size) {
 					if (size >= getDefinedProperty(_propertyName))
@@ -527,7 +547,7 @@
 						} else if (capacity < 0) {
 							throw capacityErrorMaker("negative", HELPER_ERROR_MAKER_OPTION_NEGATED, RangeError);
 						} else if (capacity < privateCapacity) {
-							var difference = M.min(privateCapacity, _this.size) - capacity;
+							var difference = M.min(privateCapacity, getDefinedProperty("size")) - capacity;
 
 							for (var i = 0; i < difference; ++i) {
 								var index = getDefinedProperty("_oldestIndex");

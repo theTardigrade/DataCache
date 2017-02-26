@@ -144,6 +144,12 @@ function DataCache(options) {
 		return value;
 	};
 
+	this.clean = function() {
+		for (let i = 1, l = cache.length; i < l; i += 2)
+			if (helper_getCurrentTimestamp() - cache[i].metadata.updated > privateMaxAge)
+				this.unset(cache[i - 1]);
+	};
+
 	this.iterate = function(callback, options) {
 		for (let i = 0, l = cache.length, key, value; i < l; i += 2) {
 			key = cache[i];
@@ -285,7 +291,21 @@ function DataCache(options) {
 		let propertyName = "size";
 
 		definePropertyHere(propertyName, {
-			get: (() => cache.length / 2),
+			get: () => {
+				let l = cache.length;
+
+				if (l && privateMaxAge < global.Infinity) {
+					let total = 0;
+
+					for (let i = 1; i < l; i += 2)
+						if (helper_getCurrentTimestamp() - cache[i].metadata.updated <= privateMaxAge)
+							++total;
+
+					return total;
+				}
+
+				return l / 2;
+			},
 			set: (size) => {
 				if (size >= getDefinedProperty(propertyName))
 					return;
@@ -327,7 +347,7 @@ function DataCache(options) {
 					} else if (capacity < 0) {
 						throw capacityErrorMaker("negative", HELPER_ERROR_MAKER_OPTION_NEGATED, RangeError);
 					} else if (capacity < privateCapacity) {
-						let difference = M.min(privateCapacity, this.size) - capacity;
+						let difference = M.min(privateCapacity, getDefinedProperty("size")) - capacity;
 
 						for (let i = 0; i < difference; ++i) {
 							let index = getDefinedProperty("_oldestIndex");
