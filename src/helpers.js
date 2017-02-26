@@ -46,6 +46,9 @@ let sort = (cacheArray) => {
 // recursively freeze an object, to make it and all of its subobjects
 // immutable (i.e. read-only)
 let deepFreeze = (object) => {
+		if (!EXISTS.freeze)
+			return false;
+
 		for (let key in object)
 			if (typeof object === OBJECT_TYPE)
 				deepFreeze(object[key]);
@@ -54,11 +57,16 @@ let deepFreeze = (object) => {
 	};
 
 // polyfill of Array.isArray
-let isArray = (thing) => {
-		return (EXISTS.isArray)
-			? A.isArray(thing)
-			: O.prototype.toString.call(thing) === "[object Array]";
-	};
+let isArray = (() => {
+		let nativeKey = "isArray";
+
+		if (EXISTS[nativeKey])
+			return A[nativeKey];
+
+		return (thing) => {
+			 O.prototype.toString.call(thing) === "[object Array]";
+		};
+	})();
 
 // return the contents of an array in English human-readable form
 let arrayToHumanString = (array, bitmaskOptions) => {
@@ -97,29 +105,33 @@ let errorMaker = (thing, predicative, bitmaskOptions, ConstructorFunc) => {
 	};
 
 // polyfill of Object.assign
-let assignObject = (target, ...sources) => {
-		if (EXISTS.assign)
-			return O.assign.apply(O, [target].concat(sources));
+let assignObject = (() => {
+		let nativeKey = "assign";
 
-		if (target == null)
-			throw errorMaker(
-				"Target object",
-				[UNDEFINED_TYPE, NULL_NAME],
-				ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_NEGATED,
-				TypeError
-			);
+		if (EXISTS[nativeKey])
+			return O[nativeKey];
 
-		let t = O(target);
+		return (target, ...sources) => {
+			if (target == null)
+				throw errorMaker(
+					"Target object",
+					[UNDEFINED_TYPE, NULL_NAME],
+					ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_NEGATED,
+					TypeError
+				);
 
-		for (let i = 0, l = sources.length, s; i < l; ++i) {
-			if ((s = sources[i]) == null)
-				continue;
+			let t = O(target);
 
-			for (let key in s)
-				if (O.prototype.hasOwnProperty.call(s, key))
-					t[key] = s[key];
-		}
+			for (let i = 0, l = sources.length, s; i < l; ++i) {
+				if ((s = sources[i]) == null)
+					continue;
 
-		return t;
-	};
+				for (let key in s)
+					if (O.prototype.hasOwnProperty.call(s, key))
+						t[key] = s[key];
+			}
+
+			return t;
+		};
+	})();
 

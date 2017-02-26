@@ -111,6 +111,9 @@
 	};
 
 	var deepFreeze = function(object) {
+		if (!EXISTS.freeze)
+			return false;
+
 		for (var key in object) {
 			if (typeof object === OBJECT_TYPE)
 				deepFreeze(object[key]);
@@ -119,11 +122,16 @@
 		O.freeze(object);
 	};
 
-	var isArray = function(thing) {
-		return EXISTS.isArray
-			? A.isArray(thing)
-			: O.prototype.toString.call(thing) === "[object Array]";
-	};
+	var isArray = (function() {
+		var nativeKey = "isArray";
+
+		if (EXISTS[nativeKey])
+			return A[nativeKey];
+
+		return function(thing) {
+			O.prototype.toString.call(thing) === "[object Array]";
+		};
+	})();
 
 	var arrayToHumanString = function(array, bitmaskOptions) {
 		var str = "";
@@ -160,34 +168,38 @@
 		return new(isConstructorValid ? ConstructorFunc : Error)(msg);
 	};
 
-	var assignObject = function(target) {
-		for (var _len = arguments.length, sources = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key
-			< _len; _key++) {
-			sources[_key - 1] = arguments[_key];
-		}
-		if (EXISTS.assign)
-			return O.assign.apply(O, [target].concat(sources));
+	var assignObject = (function() {
+		var nativeKey = "assign";
 
-		if (target == null)
-			throw errorMaker(
-				"Target object", [UNDEFINED_TYPE, NULL_NAME],
-				ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_NEGATED,
-				TypeError);
+		if (EXISTS[nativeKey])
+			return O[nativeKey];
 
-		var t = O(target);
-
-		for (var i = 0, l = sources.length, s; i < l; ++i) {
-			if ((s = sources[i]) == null)
-				continue;
-
-			for (var key in s) {
-				if (O.prototype.hasOwnProperty.call(s, key))
-					t[key] = s[key];
+		return function(target) {
+			for (var _len = arguments.length, sources = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key
+				< _len; _key++) {
+				sources[_key - 1] = arguments[_key];
 			}
-		}
+			if (target == null)
+				throw errorMaker(
+					"Target object", [UNDEFINED_TYPE, NULL_NAME],
+					ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_NEGATED,
+					TypeError);
 
-		return t;
-	};
+			var t = O(target);
+
+			for (var i = 0, l = sources.length, s; i < l; ++i) {
+				if ((s = sources[i]) == null)
+					continue;
+
+				for (var key in s) {
+					if (O.prototype.hasOwnProperty.call(s, key))
+						t[key] = s[key];
+				}
+			}
+
+			return t;
+		};
+	})();
 
 	function DataCache(options) {
 		var _this = this;
