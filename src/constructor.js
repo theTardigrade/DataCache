@@ -63,8 +63,10 @@ function DataCache(options) {
 		if (typeof key !== privateKeyType)
 			throw errorMaker("Key", "a " + privateKeyType, NO_OPT, TypeError);
 
-		if (typeof data === UNDEFINED_TYPE || data === null)
-			return this.unset(key);
+		if (data == null)
+			throw errorMaker("Data", [UNDEFINED_TYPE, NULL_NAME],
+				ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_NEGATED,
+				TypeError);
 
 		let index = search(cache, key);
 

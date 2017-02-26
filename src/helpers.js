@@ -104,8 +104,9 @@ let assignObject = (target, ...sources) => {
 		if (target == null)
 			throw errorMaker(
 				"Target object",
-				[UNDEFINED_TYPE, "null"],
-				ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_NEGATED
+				[UNDEFINED_TYPE, NULL_NAME],
+				ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_NEGATED,
+				TypeError
 			);
 
 		let t = O(target);

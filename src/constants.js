@@ -1,3 +1,13 @@
+// return values of typeof function on various types
+// for use in comparisons and conditionals
+const OBJECT_TYPE = "object",
+	FUNCTION_TYPE = "function",
+	STRING_TYPE = "string",
+	NUMBER_TYPE = "number",
+	UNDEFINED_TYPE = "undefined";
+
+const NULL_NAME = "null";
+
 // object where keys are names of properties defined on global objects
 // and values are booleans showing whether they're available or not
 const EXISTS = ((data) => {
