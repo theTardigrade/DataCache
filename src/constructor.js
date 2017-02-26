@@ -66,7 +66,12 @@ function DataCache(options) {
 			setDefinedProperty("keyType", (typeof key));
 
 		if (typeof key !== privateKeyType)
-			throw helper_errorMaker("Key", "a " + privateKeyType, HELPER_NO_OPTION, TypeError);
+			throw helper_errorMaker(
+				"Key",
+				privateKeyType,
+				HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE,
+				TypeError
+			);
 
 		if (data == null)
 			throw helper_errorMaker(
@@ -317,7 +322,8 @@ function DataCache(options) {
 					if (capacity === privateCapacity) {
 						return;
 					} else if (typeof capacity !== NUMBER_TYPE || isNaN(capacity)) {
-						throw capacityErrorMaker("a " + NUMBER_TYPE + " (excluding NaN)", HELPER_NO_OPTION, TypeError);
+						throw capacityErrorMaker(NUMBER_TYPE + " (excluding NaN)",
+							HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE, TypeError);
 					} else if (capacity < 0) {
 						throw capacityErrorMaker("negative", HELPER_ERROR_MAKER_OPTION_NEGATED, RangeError);
 					} else if (capacity < privateCapacity) {
@@ -364,7 +370,8 @@ function DataCache(options) {
 					if (maxAge === privateMaxAge) {
 						return;
 					} else if (typeof maxAge !== NUMBER_TYPE || isNaN(maxAge)) {
-						throw maxAgeErrorMaker("a " + NUMBER_TYPE + " of milliseconds", HELPER_NO_OPTION, TypeError);
+						throw maxAgeErrorMaker(NUMBER_TYPE + " of milliseconds",
+							HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE, TypeError);
 					} else if (maxAge < 0) {
 						throw maxAgeErrorMaker("negative", HELPER_ERROR_MAKER_OPTION_NEGATED, RangeError);
 					}

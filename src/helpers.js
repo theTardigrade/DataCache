@@ -92,7 +92,8 @@ let helper_errorMaker = (thing, predicative, bitmaskOptions, ConstructorFunc) =>
 		let msg = ((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_PROPERTY) ? "Property [" + thing + "]" : thing)
 				+ " " + ((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_NEGATED) ? "cannot" : "must")
 				+ " " + ((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_CONTAIN) ? "contain" : "be")
-				+ " " +((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_ONE_MAX) ? "more than " : "")
+				+ " " + ((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_ONE_MAX) ? "more than " : "")
+				+ ((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE) ? "a " : "")
 				+ ((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_ALTERNATIVES)
 					? "one of the following: "
 						+ helper_arrayToHumanString(predicative, HELPER_ARRAY_TO_HUMAN_STRING_OPTION_ALTERNATIVES)
@@ -142,9 +143,11 @@ let helper_getCurrentTimestamp = (() => {
 
 		return (bitmaskOptions) => {
 			let timestamp = ((nativeKeyExists) ? D[nativeKey] : new D().getTime)();
-
+			return timestamp;
+/*
 			return (bitmaskOptions & HELPER_GET_CURRENT_TIMESTAMP_OPTION_SECONDS)
 				? M.round(timestamp / 1e3)
 				: timestamp;
+*/
 		};
 	})();

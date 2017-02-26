@@ -68,7 +68,8 @@
 		HELPER_ERROR_MAKER_OPTION_NEGATED = 2,
 		HELPER_ERROR_MAKER_OPTION_ALTERNATIVES = 4,
 		HELPER_ERROR_MAKER_OPTION_ONE_MAX = 8,
-		HELPER_ERROR_MAKER_OPTION_CONTAIN = 16;
+		HELPER_ERROR_MAKER_OPTION_CONTAIN = 16,
+		HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE = 32;
 
 	var HELPER_GET_CURRENT_TIMESTAMP_OPTION_SECONDS = 1;
 
@@ -159,6 +160,7 @@
 			+ " " + (bitmaskOptions & HELPER_ERROR_MAKER_OPTION_NEGATED ? "cannot" : "must")
 			+ " " + (bitmaskOptions & HELPER_ERROR_MAKER_OPTION_CONTAIN ? "contain" : "be")
 			+ " " + (bitmaskOptions & HELPER_ERROR_MAKER_OPTION_ONE_MAX ? "more than " : "") + (
+				bitmaskOptions & HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE ? "a " : "") + (
 				bitmaskOptions & HELPER_ERROR_MAKER_OPTION_ALTERNATIVES
 				? "one of the following: "
 				+ helper_arrayToHumanString(predicative, HELPER_ARRAY_TO_HUMAN_STRING_OPTION_ALTERNATIVES)
@@ -210,10 +212,7 @@
 
 		return function(bitmaskOptions) {
 			var timestamp = (nativeKeyExists ? D[nativeKey] : new D().getTime)();
-
-			return bitmaskOptions & HELPER_GET_CURRENT_TIMESTAMP_OPTION_SECONDS
-				? M.round(timestamp / 1e3)
-				: timestamp;
+			return timestamp;
 		};
 	})();
 
@@ -275,7 +274,11 @@
 				setDefinedProperty("keyType", typeof key);
 
 			if (typeof key !== privateKeyType)
-				throw helper_errorMaker("Key", "a " + privateKeyType, HELPER_NO_OPTION, TypeError);
+				throw helper_errorMaker(
+					"Key",
+					privateKeyType,
+					HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE,
+					TypeError);
 
 			if (data == null)
 				throw helper_errorMaker(
@@ -519,8 +522,8 @@
 						if (capacity === privateCapacity) {
 							return;
 						} else if (typeof capacity !== NUMBER_TYPE || isNaN(capacity)) {
-							throw capacityErrorMaker("a " + NUMBER_TYPE + " (excluding NaN)", HELPER_NO_OPTION,
-								TypeError);
+							throw capacityErrorMaker(NUMBER_TYPE + " (excluding NaN)",
+								HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE, TypeError);
 						} else if (capacity < 0) {
 							throw capacityErrorMaker("negative", HELPER_ERROR_MAKER_OPTION_NEGATED, RangeError);
 						} else if (capacity < privateCapacity) {
@@ -568,8 +571,8 @@
 						if (maxAge === privateMaxAge) {
 							return;
 						} else if (typeof maxAge !== NUMBER_TYPE || isNaN(maxAge)) {
-							throw maxAgeErrorMaker("a " + NUMBER_TYPE + " of milliseconds", HELPER_NO_OPTION,
-								TypeError);
+							throw maxAgeErrorMaker(NUMBER_TYPE + " of milliseconds",
+								HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE, TypeError);
 						} else if (maxAge < 0) {
 							throw maxAgeErrorMaker("negative", HELPER_ERROR_MAKER_OPTION_NEGATED, RangeError);
 						}
