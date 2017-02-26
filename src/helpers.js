@@ -2,7 +2,7 @@
 // to account for the fact that in the array used to hold cache data
 // odd-numbered indices contain keys and the successive odd-numbered
 // index contains a corresponding value
-let search = (cacheArray, key) => {
+let helper_search = (cacheArray, key) => {
 		let lowerBound = 0,
 			upperBound = cacheArray.length - 1;
 
@@ -25,7 +25,7 @@ let search = (cacheArray, key) => {
 // insertion sort, where odd-numbered indices are sorted based on the
 // value of the previous even-numbered index, i.e. two indices are
 // swapped per iteration of the inner loop
-let sort = (cacheArray) => {
+let helper_sort = (cacheArray) => {
 		for (let i = 0, l = cacheArray.length, j, k; i < l; i += 2) {
 			let key = cacheArray[i],
 				value = cacheArray[i + 1];
@@ -45,16 +45,16 @@ let sort = (cacheArray) => {
 
 // recursively freeze an object, to make it and all of its subobjects
 // immutable (i.e. read-only)
-let deepFreeze = (object) => {
+let helper_deepFreeze = (object) => {
 		for (let key in object)
 			if (typeof object === OBJECT_TYPE)
-				deepFreeze(object[key]);
+				helper_deepFreeze(object[key]);
 
 		O.freeze(object);
 	};
 
 // polyfill of Array.isArray
-let isArray = (() => {
+let helper_isArray = (() => {
 		let nativeKey = "isArray";
 
 		if (EXISTS[nativeKey])
@@ -66,10 +66,10 @@ let isArray = (() => {
 	})();
 
 // return the contents of an array in English human-readable form
-let arrayToHumanString = (array, bitmaskOptions) => {
+let helper_arrayToHumanString = (array, bitmaskOptions) => {
 		let str = "";
 
-		if (isArray(array)) {
+		if (helper_isArray(array)) {
 			for (let i = 0, l = array.length, tmp; i < l; ++i) {
 				tmp = "\"" + array[i].toString() + "\"";
 				str += (i < l - 2)
@@ -84,14 +84,14 @@ let arrayToHumanString = (array, bitmaskOptions) => {
 	};
 
 // used to generate appropriate error instances and messages
-let errorMaker = (thing, predicative, bitmaskOptions, ConstructorFunc) => {
+let helper_errorMaker = (thing, predicative, bitmaskOptions, ConstructorFunc) => {
 		let msg = ((bitmaskOptions & ERROR_MAKER_OPT_PROPERTY) ? "Property [" + thing + "]" : thing)
 				+ " " + ((bitmaskOptions & ERROR_MAKER_OPT_NEGATED) ? "cannot" : "must")
 				+ " " + ((bitmaskOptions & ERROR_MAKER_OPT_CONTAIN) ? "contain" : "be")
 				+ " " +((bitmaskOptions & ERROR_MAKER_OPT_ONE_MAX) ? "more than " : "")
 				+ ((bitmaskOptions & ERROR_MAKER_OPT_ALTERNATIVES)
 					? "one of the following: "
-						+ arrayToHumanString(predicative, ARRAY_TO_HUMAN_STRING_OPT_ALTERNATIVES)
+						+ helper_arrayToHumanString(predicative, ARRAY_TO_HUMAN_STRING_OPT_ALTERNATIVES)
 					: predicative)
 				+ ".",
 			isConstructorValid = (typeof ConstructorFunc === FUNCTION_TYPE
@@ -102,7 +102,7 @@ let errorMaker = (thing, predicative, bitmaskOptions, ConstructorFunc) => {
 	};
 
 // polyfill of Object.assign
-let assignObject = (() => {
+let helper_assignObject = (() => {
 		let nativeKey = "assign";
 
 		if (EXISTS[nativeKey])
@@ -110,7 +110,7 @@ let assignObject = (() => {
 
 		return (target, ...sources) => {
 			if (target == null)
-				throw errorMaker(
+				throw helper_errorMaker(
 					"Target object",
 					[UNDEFINED_TYPE, NULL_NAME],
 					ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_NEGATED,
@@ -132,7 +132,7 @@ let assignObject = (() => {
 		};
 	})();
 
-let getCurrentTimestamp = (() => {
+let helper_getCurrentTimestamp = (() => {
 		let nativeKey = "now",
 			nativeKeyExists = EXISTS[nativeKey];
 

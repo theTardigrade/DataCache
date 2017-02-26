@@ -72,7 +72,7 @@
 
 	var GET_CURRENT_TIMESTAMP_OPT_SECONDS = 1;
 
-	var search = function(cacheArray, key) {
+	var helper_search = function(cacheArray, key) {
 		var lowerBound = 0,
 			upperBound = cacheArray.length - 1;
 
@@ -93,7 +93,7 @@
 		}
 	};
 
-	var sort = function(cacheArray) {
+	var helper_sort = function(cacheArray) {
 		for (var i = 0, l = cacheArray.length, j, k; i < l; i += 2) {
 			var key = cacheArray[i],
 				value = cacheArray[i + 1];
@@ -112,16 +112,16 @@
 		}
 	};
 
-	var deepFreeze = function(object) {
+	var helper_deepFreeze = function(object) {
 		for (var key in object) {
 			if (typeof object === OBJECT_TYPE)
-				deepFreeze(object[key]);
+				helper_deepFreeze(object[key]);
 		}
 
 		O.freeze(object);
 	};
 
-	var isArray = (function() {
+	var helper_isArray = (function() {
 		var nativeKey = "isArray";
 
 		if (EXISTS[nativeKey])
@@ -132,10 +132,10 @@
 		};
 	})();
 
-	var arrayToHumanString = function(array, bitmaskOptions) {
+	var helper_arrayToHumanString = function(array, bitmaskOptions) {
 		var str = "";
 
-		if (isArray(array)) {
+		if (helper_isArray(array)) {
 			for (var i = 0, l = array.length, tmp; i < l; ++i) {
 				tmp = "\"" + array[i].toString() + "\"";
 				str += i < l - 2
@@ -150,14 +150,14 @@
 		return str;
 	};
 
-	var errorMaker = function(thing, predicative, bitmaskOptions, ConstructorFunc) {
+	var helper_errorMaker = function(thing, predicative, bitmaskOptions, ConstructorFunc) {
 		var msg = (bitmaskOptions & ERROR_MAKER_OPT_PROPERTY ? "Property [" + thing + "]" : thing)
 			+ " " + (bitmaskOptions & ERROR_MAKER_OPT_NEGATED ? "cannot" : "must")
 			+ " " + (bitmaskOptions & ERROR_MAKER_OPT_CONTAIN ? "contain" : "be")
 			+ " " + (bitmaskOptions & ERROR_MAKER_OPT_ONE_MAX ? "more than " : "") + (
 				bitmaskOptions & ERROR_MAKER_OPT_ALTERNATIVES
 				? "one of the following: "
-				+ arrayToHumanString(predicative, ARRAY_TO_HUMAN_STRING_OPT_ALTERNATIVES)
+				+ helper_arrayToHumanString(predicative, ARRAY_TO_HUMAN_STRING_OPT_ALTERNATIVES)
 				: predicative)
 			+ ".",
 			isConstructorValid = typeof ConstructorFunc === FUNCTION_TYPE
@@ -167,7 +167,7 @@
 		return new(isConstructorValid ? ConstructorFunc : Error)(msg);
 	};
 
-	var assignObject = (function() {
+	var helper_assignObject = (function() {
 		var nativeKey = "assign";
 
 		if (EXISTS[nativeKey])
@@ -179,7 +179,7 @@
 				sources[_key - 1] = arguments[_key];
 			}
 			if (target == null)
-				throw errorMaker(
+				throw helper_errorMaker(
 					"Target object", [UNDEFINED_TYPE, NULL_NAME],
 					ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_NEGATED,
 					TypeError);
@@ -200,7 +200,7 @@
 		};
 	})();
 
-	var getCurrentTimestamp = (function() {
+	var helper_getCurrentTimestamp = (function() {
 		var nativeKey = "now",
 			nativeKeyExists = EXISTS[nativeKey];
 
@@ -231,14 +231,14 @@
 				if (typeof key !== privateKeyType)
 					return value;
 
-				var index = search(cache, key);
+				var index = helper_search(cache, key);
 
 				if (index === -1)
 					return value;
 
 				value = cache[index];
 
-				if (getCurrentTimestamp() - value.metadata.updated > privateMaxAge) {
+				if (helper_getCurrentTimestamp() - value.metadata.updated > privateMaxAge) {
 					this.unset(key);
 					return null;
 				}
@@ -247,7 +247,7 @@
 					for (var _i = 0, setOnlyOptionCount = 0, _l = onlyOptionNames.length; _i < _l; ++_i) {
 						if (options[onlyOptionNames[_i]]) {
 							if (setOnlyOptionCount++)
-								throw errorMaker(
+								throw helper_errorMaker(
 									"Options",
 									onlyOptionNames,
 									ERROR_MAKER_OPT_ONE_MAX | ERROR_MAKER_OPT_NEGATED
@@ -263,7 +263,7 @@
 		})();
 
 		this.has = function(key) {
-			return typeof key === privateKeyType && search(cache, key) > -1;
+			return typeof key === privateKeyType && helper_search(cache, key) > -1;
 		};
 
 		this.set = function(key, data) {
@@ -271,14 +271,14 @@
 				setDefinedProperty("keyType", typeof key);
 
 			if (typeof key !== privateKeyType)
-				throw errorMaker("Key", "a " + privateKeyType, NO_OPT, TypeError);
+				throw helper_errorMaker("Key", "a " + privateKeyType, NO_OPT, TypeError);
 
 			if (data == null)
-				throw errorMaker("Data", [UNDEFINED_TYPE, NULL_NAME],
+				throw helper_errorMaker("Data", [UNDEFINED_TYPE, NULL_NAME],
 					ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_NEGATED,
 					TypeError);
 
-			var index = search(cache, key);
+			var index = helper_search(cache, key);
 
 			if (index === -1)
 				index = cache.length + 1;
@@ -291,7 +291,7 @@
 				},
 
 				metadata = object.metadata = {
-					updated: getCurrentTimestamp()
+					updated: helper_getCurrentTimestamp()
 				},
 
 				cachedMetadata = cache[index] && cache[index].metadata && typeof cache[index].metadata.created
@@ -302,12 +302,12 @@
 			metadata.created = cachedMetadata.created || cachedMetadata.updated;
 
 			if (EXISTS.freeze)
-				deepFreeze(object);
+				helper_deepFreeze(object);
 
 			cache[index - 1] = key;
 			cache[index] = object;
 
-			sort(cache);
+			helper_sort(cache);
 			return object;
 		};
 
@@ -317,7 +317,7 @@
 			if (typeof key !== privateKeyType)
 				return value;
 
-			var index = search(cache, key),
+			var index = helper_search(cache, key),
 				length = cache.length;
 
 			if (index === -1)
@@ -334,7 +334,7 @@
 			value = cache.pop();
 			cache.pop();
 
-			sort(cache);
+			helper_sort(cache);
 			return value;
 		};
 
@@ -444,7 +444,7 @@
 					return privateKeyType;
 				},
 				set: (function() {
-					var error = errorMaker(
+					var error = helper_errorMaker(
 						propertyName,
 						ALLOWABLE_KEY_TYPES,
 						ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_PROPERTY,
@@ -502,7 +502,7 @@
 				},
 				set: (function() {
 					var capacityErrorMaker = function(predicative, bitmaskOptions, constructor) {
-						return errorMaker(
+						return helper_errorMaker(
 							_propertyName2,
 							predicative,
 							ERROR_MAKER_OPT_PROPERTY | bitmaskOptions,
@@ -550,7 +550,7 @@
 				},
 				set: (function() {
 					var maxAgeErrorMaker = function(predicative, bitmaskOptions, constructor) {
-						return errorMaker(
+						return helper_errorMaker(
 							_propertyName3,
 							predicative,
 							ERROR_MAKER_OPT_PROPERTY | bitmaskOptions,
@@ -637,7 +637,7 @@
 			}
 		};
 
-		assignObject(DataCache.prototype, prototype);
+		helper_assignObject(DataCache.prototype, prototype);
 	}
 
 	{

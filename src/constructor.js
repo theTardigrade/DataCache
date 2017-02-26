@@ -25,14 +25,14 @@ function DataCache(options) {
 			if (typeof key !== privateKeyType)
 				return value;
 
-			let index = search(cache, key);
+			let index = helper_search(cache, key);
 
 			if (index === -1)
 				return value;
 
 			value = cache[index];
 
-			if (getCurrentTimestamp() - value.metadata.updated > privateMaxAge) {
+			if (helper_getCurrentTimestamp() - value.metadata.updated > privateMaxAge) {
 				this.unset(key);
 				return null;
 			}
@@ -41,7 +41,7 @@ function DataCache(options) {
 				for (let i = 0, setOnlyOptionCount = 0, l = onlyOptionNames.length; i < l; ++i) {
 					if (options[onlyOptionNames[i]]) {
 						if (setOnlyOptionCount++)
-							throw errorMaker(
+							throw helper_errorMaker(
 								"Options",
 								onlyOptionNames,
 								ERROR_MAKER_OPT_ONE_MAX | ERROR_MAKER_OPT_NEGATED
@@ -58,7 +58,7 @@ function DataCache(options) {
 	})();
 
 	this.has = function(key) {
-		return (typeof key === privateKeyType && search(cache, key) > -1);
+		return (typeof key === privateKeyType && helper_search(cache, key) > -1);
 	};
 
 	this.set = function(key, data) {
@@ -66,14 +66,14 @@ function DataCache(options) {
 			setDefinedProperty("keyType", (typeof key));
 
 		if (typeof key !== privateKeyType)
-			throw errorMaker("Key", "a " + privateKeyType, NO_OPT, TypeError);
+			throw helper_errorMaker("Key", "a " + privateKeyType, NO_OPT, TypeError);
 
 		if (data == null)
-			throw errorMaker("Data", [UNDEFINED_TYPE, NULL_NAME],
+			throw helper_errorMaker("Data", [UNDEFINED_TYPE, NULL_NAME],
 				ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_NEGATED,
 				TypeError);
 
-		let index = search(cache, key);
+		let index = helper_search(cache, key);
 
 		if (index === -1)
 			index = cache.length + 1;
@@ -87,7 +87,7 @@ function DataCache(options) {
 				data: data
 			},
 			metadata = object.metadata = {
-				updated: getCurrentTimestamp()
+				updated: helper_getCurrentTimestamp()
 			},
 			cachedMetadata = (cache[index] && cache[index].metadata && typeof cache[index].metadata.created === NUMBER_TYPE)
 				? cache[index].metadata
@@ -99,12 +99,12 @@ function DataCache(options) {
 		// therefore stored data and metadata can only be changed by
 		// re-setting it
 		if (EXISTS.freeze)
-			deepFreeze(object);
+			helper_deepFreeze(object);
 
 		cache[index - 1] = key;
 		cache[index] = object;
 
-		sort(cache);
+		helper_sort(cache);
 		return object;
 	};
 
@@ -114,7 +114,7 @@ function DataCache(options) {
 		if (typeof key !== privateKeyType)
 			return value;
 
-		let index = search(cache, key),
+		let index = helper_search(cache, key),
 			length = cache.length;
 
 		if (index === -1)
@@ -132,7 +132,7 @@ function DataCache(options) {
 		value = cache.pop();
 		cache.pop();
 
-		sort(cache);
+		helper_sort(cache);
 		return value;
 	};
 
@@ -249,7 +249,7 @@ function DataCache(options) {
 		definePropertyHere(propertyName, {
 			get: (() => privateKeyType),
 			set: (() => {
-				let error = errorMaker(
+				let error = helper_errorMaker(
 						propertyName,
 						ALLOWABLE_KEY_TYPES,
 						ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_PROPERTY,
@@ -302,7 +302,7 @@ function DataCache(options) {
 			get: (() => privateCapacity),
 			set: (() => {
 				let capacityErrorMaker = (predicative, bitmaskOptions, constructor) => {
-						return errorMaker(
+						return helper_errorMaker(
 							propertyName,
 							predicative,
 							ERROR_MAKER_OPT_PROPERTY | bitmaskOptions,
@@ -349,7 +349,7 @@ function DataCache(options) {
 			get: (() => privateMaxAge),
 			set: (() => {
 				let maxAgeErrorMaker = (predicative, bitmaskOptions, constructor) => {
-						return errorMaker(
+						return helper_errorMaker(
 							propertyName,
 							predicative,
 							ERROR_MAKER_OPT_PROPERTY | bitmaskOptions,
@@ -437,7 +437,7 @@ function DataCache(options) {
 
 		};
 
-	assignObject(DataCache.prototype, prototype);
+	helper_assignObject(DataCache.prototype, prototype);
 }
 
 
