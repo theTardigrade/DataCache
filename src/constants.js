@@ -54,6 +54,8 @@ if (!EXISTS.includes) {
 const MAX_ARRAY_LENGTH = ((1 << 16) * (1 << 16)) - 1,
 	MAX_CAPACITY = M.floor(MAX_ARRAY_LENGTH / 2);
 
+const AUTOMATIC_GARBAGE_COLLECTION_DEFAULT_TIMEOUT = (1 << 14);
+
 
 /* bitmask options for helper functions */
 

@@ -60,6 +60,8 @@
 	var MAX_ARRAY_LENGTH = (1 << 16) * (1 << 16) - 1,
 		MAX_CAPACITY = M.floor(MAX_ARRAY_LENGTH / 2);
 
+	var AUTOMATIC_GARBAGE_COLLECTION_DEFAULT_TIMEOUT = 1 << 14;
+
 	var HELPER_NO_OPTION = 0;
 
 	var HELPER_ARRAY_TO_HUMAN_STRING_OPTION_ALTERNATIVES = 1;
@@ -218,7 +220,7 @@
 
 	function DataCache(options) {
 		var _this = this;
-		var privateCache = this._debugCache = [];
+		var privateCache = [];
 
 		this.get = (function() {
 			var onlyPropertyNames = ["data", "metadata"],
@@ -345,6 +347,9 @@
 		};
 
 		this.collectGarbage = function() {
+			if (privateMaxAge === global.Infinity)
+				return;
+
 			for (var i = 1, l = privateCache.length; i < l; i += 2) {
 				if (helper_getCurrentTimestamp() - privateCache[i].metadata.updated > privateMaxAge)
 					this.unset(privateCache[i - 1]);
@@ -485,8 +490,7 @@
 
 			definePropertyHere(_propertyName, {
 				get: function() {
-					if (privateMaxAge < global.Infinity)
-						_this.clean();
+					_this.collectGarbage();
 
 					return privateCache.length / 2;
 				},
@@ -592,6 +596,45 @@
 
 			if (options && typeof options[_propertyName3] !== UNDEFINED_TYPE)
 				setDefinedProperty(_propertyName3, options[_propertyName3]);
+		}
+
+		var privateAutomaticGarbageCollection = false,
+			privateAutomaticGarbageCollectionTimeoutId = 0,
+			privateAutomaticGarbageCollectionTimeoutHandler = function() {
+				stopAutomaticGarbageCollection();
+
+				if (privateAutomaticGarbageCollection) {
+					_this.collectGarbage();
+					startAutomaticGarbageCollection();
+				}
+			},
+			startAutomaticGarbageCollection = function() {
+				privateAutomaticGarbageCollectionTimeoutId = global.setTimeout(
+					privateAutomaticGarbageCollectionTimeoutHandler,
+					AUTOMATIC_GARBAGE_COLLECTION_DEFAULT_TIMEOUT);
+
+			},
+			stopAutomaticGarbageCollection = function() {
+				if (privateAutomaticGarbageCollectionTimeoutId)
+					global.clearTimeout(privateAutomaticGarbageCollectionTimeoutId);
+			};
+
+		{
+			var _propertyName4 = "automaticGarbageCollection";
+
+			definePropertyHere(_propertyName4, {
+				get: function() {
+					return privateAutomaticGarbageCollection;
+				},
+				set: function(value) {
+					((privateAutomaticGarbageCollection = !!value)
+						? startAutomaticGarbageCollection
+						: stopAutomaticGarbageCollection)();
+				}
+			});
+
+			if (options && typeof options[_propertyName4] !== UNDEFINED_TYPE)
+				setDefinedProperty(_propertyName4, options[_propertyName4]);
 		}
 
 		definePropertyHere("_oldestIndex", {

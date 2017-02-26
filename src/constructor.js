@@ -8,7 +8,7 @@
 */
 
 function DataCache(options) {
-	let privateCache = this._debugCache = [];
+	let privateCache = [];
 
 	/* public functions */
 
@@ -144,6 +144,9 @@ function DataCache(options) {
 	};
 
 	this.collectGarbage = function() {
+		if (privateMaxAge === global.Infinity)
+			return;
+
 		for (let i = 1, l = privateCache.length; i < l; i += 2)
 			if (helper_getCurrentTimestamp() - privateCache[i].metadata.updated > privateMaxAge)
 				this.unset(privateCache[i - 1]);
@@ -292,8 +295,7 @@ function DataCache(options) {
 
 		definePropertyHere(propertyName, {
 			get: () => {
-				if (privateMaxAge < global.Infinity)
-					this.clean();
+				this.collectGarbage();
 
 				return privateCache.length / 2;
 			},
@@ -390,6 +392,44 @@ function DataCache(options) {
 					privateMaxAge = maxAge;
 				};
 			})()
+		});
+
+		if (options && typeof options[propertyName] !== UNDEFINED_TYPE)
+			setDefinedProperty(propertyName, options[propertyName]);
+	}
+
+
+	let privateAutomaticGarbageCollection = false,
+		privateAutomaticGarbageCollectionTimeoutId = 0,
+		privateAutomaticGarbageCollectionTimeoutHandler = (() => {
+			stopAutomaticGarbageCollection();
+
+			if (privateAutomaticGarbageCollection) {
+				this.collectGarbage();
+				startAutomaticGarbageCollection();
+			}
+		}),
+		startAutomaticGarbageCollection = () => {
+			privateAutomaticGarbageCollectionTimeoutId = global.setTimeout(
+				privateAutomaticGarbageCollectionTimeoutHandler,
+				AUTOMATIC_GARBAGE_COLLECTION_DEFAULT_TIMEOUT
+			);
+		},
+		stopAutomaticGarbageCollection = () => {
+			if (privateAutomaticGarbageCollectionTimeoutId)
+				global.clearTimeout(privateAutomaticGarbageCollectionTimeoutId);
+		};
+
+	{
+		let propertyName = "automaticGarbageCollection";
+
+		definePropertyHere(propertyName, {
+			get: (() => privateAutomaticGarbageCollection),
+			set: ((value) => {
+				((privateAutomaticGarbageCollection = !!value) // intentional assignment in condition
+					? startAutomaticGarbageCollection
+					: stopAutomaticGarbageCollection)();
+			})
 		});
 
 		if (options && typeof options[propertyName] !== UNDEFINED_TYPE)
