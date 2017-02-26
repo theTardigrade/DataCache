@@ -336,49 +336,51 @@ function DataCache(options) {
 }
 
 
-// the following method, on both the constructor and its instances, can be used
-// to determine whether to use new-style getters and setters if it returns true
-//     (e.g. this.capacity = 100)
-// or old-style getters and settters if false
-//     (e.g. this.setCapacity(100))
-((methodName) => {
-	let objects = [ DataCache, DataCache.prototype ],
-		method = (() => EXISTS.defineProperty);
+// block-scope, if supported
+{
+	// the following method, on both the constructor and its prototype, can be used
+	// to determine whether to use new-style getters and setters if it returns true
+	//     (e.g. this.capacity = 100)
+	// or old-style getters and settters if false
+	//     (e.g. this.setCapacity(100))
+	let supportsNativeGettersAndSetters = ((methodName) => {
+			let objects = [ DataCache, DataCache.prototype ],
+				method = (() => EXISTS.defineProperty);
 
-	for (let i = 0, l = objects.length; i < l; ++i)
-		objects[i][methodName] = method;
-})("supportsNativeGettersAndSetters");
+			for (let i = 0, l = objects.length; i < l; ++i)
+				objects[i][methodName] = method;
 
+			return method();
+		})("supportsNativeGettersAndSetters");
 
-(function(prototype) {
+	let prototype = {
+
+			getData: ((options) => {
+				return function(key) {
+					return this.get(key, options);
+				}
+			})({ dataOnly: true }),
+
+			getMetadata: ((options) => {
+				return function(key) {
+					return this.get(key, options);
+				}
+			})({ metadataOnly: true }),
+
+			isFull: function() {
+				return (supportsNativeGettersAndSetters)
+					? this.size === this.capacity
+					: this.getSize() === this.getCapacity();
+			},
+
+			isEmpty: function() {
+				return ((supportsNativeGettersAndSetters) ? this.size : this.getSize()) === 0;
+			}
+
+		};
 
 	assignObject(DataCache.prototype, prototype);
-
-})({
-
-	getData: ((options) => {
-		return function(key) {
-			return this.get(key, options);
-		}
-	})({ dataOnly: true }),
-
-	getMetadata: ((options) => {
-		return function(key) {
-			return this.get(key, options);
-		}
-	})({ metadataOnly: true }),
-
-	isFull: function() {
-		return (EXISTS.defineProperty)
-			? this.size === this.capacity
-			: this.getSize() === this.getCapacity();
-	},
-
-	isEmpty: function() {
-		return ((EXISTS.defineProperty) ? this.size : this.getSize()) === 0;
-	}
-
-});
+}
 
 
 if (typeof module === OBJECT_TYPE && typeof module.exports === OBJECT_TYPE) {

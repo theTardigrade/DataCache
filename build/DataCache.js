@@ -531,49 +531,51 @@
 
 	}
 
-	(function(methodName) {
-		var objects = [DataCache, DataCache.prototype],
-			method = function() {
-				return EXISTS.defineProperty;
-			};
+	{
+		var supportsNativeGettersAndSetters = (function(methodName) {
+			var objects = [DataCache, DataCache.prototype],
+				method = function() {
+					return EXISTS.defineProperty;
+				};
 
-		for (var i = 0, l = objects.length; i < l; ++i) {
-			objects[i][methodName] = method;
-		}
-	})("supportsNativeGettersAndSetters");
+			for (var i = 0, l = objects.length; i < l; ++i) {
+				objects[i][methodName] = method;
+			}
 
-	(function(prototype) {
+			return method();
+		})("supportsNativeGettersAndSetters");
+
+		var prototype = {
+
+			getData: (function(options) {
+				return function(key) {
+					return this.get(key, options);
+				};
+			})({
+				dataOnly: true
+			}),
+
+			getMetadata: (function(options) {
+				return function(key) {
+					return this.get(key, options);
+				};
+			})({
+				metadataOnly: true
+			}),
+
+			isFull: function() {
+				return supportsNativeGettersAndSetters
+					? this.size === this.capacity
+					: this.getSize() === this.getCapacity();
+			},
+
+			isEmpty: function() {
+				return (supportsNativeGettersAndSetters ? this.size : this.getSize()) === 0;
+			}
+		};
 
 		assignObject(DataCache.prototype, prototype);
-
-	})({
-
-		getData: (function(options) {
-			return function(key) {
-				return this.get(key, options);
-			};
-		})({
-			dataOnly: true
-		}),
-
-		getMetadata: (function(options) {
-			return function(key) {
-				return this.get(key, options);
-			};
-		})({
-			metadataOnly: true
-		}),
-
-		isFull: function() {
-			return EXISTS.defineProperty
-				? this.size === this.capacity
-				: this.getSize() === this.getCapacity();
-		},
-
-		isEmpty: function() {
-			return (EXISTS.defineProperty ? this.size : this.getSize()) === 0;
-		}
-	});
+	}
 
 	if (typeof module === OBJECT_TYPE && typeof module.exports === OBJECT_TYPE) {
 		module.exports = DataCache;
