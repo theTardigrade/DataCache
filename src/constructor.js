@@ -243,123 +243,137 @@ function DataCache(options) {
 
 	let privateKeyType = null;
 
-	definePropertyHere("keyType", {
-		get: (() => privateKeyType),
-		set: (() => {
-			let error = errorMaker(
-					"keyType",
-					ALLOWABLE_KEY_TYPES,
-					ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_PROPERTY,
-					TypeError
-				);
+	{
+		let propertyName = "keyType";
 
-			return (keyType) => {
-				if (keyType === privateKeyType)
+		definePropertyHere(propertyName, {
+			get: (() => privateKeyType),
+			set: (() => {
+				let error = errorMaker(
+						propertyName,
+						ALLOWABLE_KEY_TYPES,
+						ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_PROPERTY,
+						TypeError
+					);
+
+				return (keyType) => {
+					if (keyType === privateKeyType && keyType !== null)
+						return;
+
+					if (ALLOWABLE_KEY_TYPES.includes(keyType))
+						privateKeyType = keyType;
+					else
+						throw error;
+				};
+			})()
+		});
+
+		if (options && typeof options[propertyName] !== UNDEFINED_TYPE)
+			setDefinedProperty(propertyName, options[propertyName]);
+	}
+
+
+	{
+		let propertyName = "size";
+
+		definePropertyHere(propertyName, {
+			get: (() => cache.length / 2),
+			set: (size) => {
+				if (size >= getDefinedProperty(propertyName))
 					return;
 
-				if (ALLOWABLE_KEY_TYPES.includes(keyType))
-					privateKeyType = keyType;
-				else
-					throw error;
-			};
-		})()
-	});
+				let capacityStr = "capacity",
+					setCapacity = (capacity) => { setDefinedProperty(capacityStr, capacity); },
+					oldCapacity = getDefinedProperty(capacityStr)
 
-	if (options && typeof options.keyType !== UNDEFINED_TYPE)
-		setDefinedProperty("keyType", options.keyType);
-
-
-	definePropertyHere("size", {
-		get: (() => cache.length / 2),
-		set: (size) => {
-			if (size >= getDefinedProperty("size"))
-				return;
-
-			let capacityStr = "capacity",
-				setCapacity = (capacity) => { setDefinedProperty(capacityStr, capacity); },
-				oldCapacity = getDefinedProperty(capacityStr)
-
-			setCapacity(size);
-			setCapacity(oldCapacity);
-		}
-	});
+				setCapacity(size);
+				setCapacity(oldCapacity);
+			}
+		});
+	}
 
 
 	let privateCapacity = 0;
 
-	definePropertyHere("capacity", {
-		get: (() => privateCapacity),
-		set: (() => {
-			// curry function
-			let capacityErrorMaker = (predicative, bitmaskOptions, constructor) => {
-					return errorMaker(
-						"capacity",
-						predicative,
-						ERROR_MAKER_OPT_PROPERTY | bitmaskOptions,
-						constructor
-					);
-				};
+	{
+		let propertyName = "capacity";
 
-			return (capacity) => {
-				if (capacity === privateCapacity) {
-					return; // do nothing
-				} else if (typeof capacity !== NUMBER_TYPE || isNaN(capacity)) {
-					throw capacityErrorMaker("a number (excluding NaN)", NO_OPT, TypeError);
-				} else if (capacity < 0) {
-					throw capacityErrorMaker("negative", ERROR_MAKER_OPT_NEGATED, RangeError);
-				} else if (capacity < privateCapacity) {
-					let difference = M.min(privateCapacity, this.size) - capacity;
+		definePropertyHere(propertyName, {
+			get: (() => privateCapacity),
+			set: (() => {
+				let capacityErrorMaker = (predicative, bitmaskOptions, constructor) => {
+						return errorMaker(
+							propertyName,
+							predicative,
+							ERROR_MAKER_OPT_PROPERTY | bitmaskOptions,
+							constructor
+						);
+					};
 
-					for (let i = 0; i < difference; ++i) {
-						let index = getDefinedProperty("_oldestIndex");
-						this.unset(cache[index - 1]);
+				return (capacity) => {
+					if (capacity === privateCapacity) {
+						return;
+					} else if (typeof capacity !== NUMBER_TYPE || isNaN(capacity)) {
+						throw capacityErrorMaker("a number (excluding NaN)", NO_OPT, TypeError);
+					} else if (capacity < 0) {
+						throw capacityErrorMaker("negative", ERROR_MAKER_OPT_NEGATED, RangeError);
+					} else if (capacity < privateCapacity) {
+						let difference = M.min(privateCapacity, this.size) - capacity;
+
+						for (let i = 0; i < difference; ++i) {
+							let index = getDefinedProperty("_oldestIndex");
+							this.unset(cache[index - 1]);
+						}
 					}
-				}
 
-				privateCapacity = M.min(M.round(capacity), MAX_CAPACITY);
-			};
-		})()
-	});
+					privateCapacity = M.min(M.round(capacity), MAX_CAPACITY);
+				};
+			})()
+		});
 
-	setDefinedProperty(
-		"capacity",
-		(options && typeof options.capacity !== UNDEFINED_TYPE)
-			? options.capacity
-			: MAX_CAPACITY
-	);
+		setDefinedProperty(
+			propertyName,
+			(options && typeof options[propertyName] !== UNDEFINED_TYPE)
+				? options[propertyName]
+				: MAX_CAPACITY
+		);
+	}
 
 
 	let privateMaxAge = global.Infinity;
 
-	definePropertyHere("maxAge", {
-		get: (() => privateMaxAge),
-		set: (() => {
-			let maxAgeErrorMaker = (predicative, bitmaskOptions, constructor) => {
-					return errorMaker(
-						"maxAge",
-						predicative,
-						ERROR_MAKER_OPT_PROPERTY | bitmaskOptions,
-						constructor
-					);
+	{
+		let propertyName = "maxAge";
+
+		definePropertyHere(propertyName, {
+			get: (() => privateMaxAge),
+			set: (() => {
+				let maxAgeErrorMaker = (predicative, bitmaskOptions, constructor) => {
+						return errorMaker(
+							propertyName,
+							predicative,
+							ERROR_MAKER_OPT_PROPERTY | bitmaskOptions,
+							constructor
+						);
+					};
+
+				return(maxAge) => {
+					if (maxAge === privateMaxAge) {
+						return;
+					} else if (typeof maxAge !== NUMBER_TYPE || isNaN(maxAge)) {
+						throw maxAgeErrorMaker("a number of milliseconds", NO_OPT, TypeError);
+					} else if (maxAge < 0) {
+						throw maxAgeErrorMaker("negative", ERROR_MAKER_OPT_NEGATED, RangeError);
+					}
+
+					privateMaxAge = maxAge;
 				};
+			})()
+		});
 
-			return(maxAge) => {
-				if (maxAge === privateMaxAge) {
-					return;
-				} else if (typeof maxAge !== NUMBER_TYPE || isNaN(maxAge)) {
-					throw maxAgeErrorMaker("a number of milliseconds", NO_OPT, TypeError);
-				} else if (maxAge < 0) {
-					throw maxAgeErrorMaker("negative", ERROR_MAKER_OPT_NEGATED, RangeError);
-				}
-
-				privateMaxAge = maxAge;
-			};
-		})()
-    });
-
-	if (options && typeof options.maxAge !== UNDEFINED_TYPE)
-		setDefinedProperty("maxAge", options.maxAge);
-
+		if (options && typeof options[propertyName] !== UNDEFINED_TYPE)
+			setDefinedProperty(propertyName, options.maxAge);
+	}
 
 	/* private getters and setters */
 

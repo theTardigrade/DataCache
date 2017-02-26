@@ -436,127 +436,145 @@
 
 		var privateKeyType = null;
 
-		definePropertyHere("keyType", {
-			get: function() {
-				return privateKeyType;
-			},
-			set: (function() {
-				var error = errorMaker(
-					"keyType",
-					ALLOWABLE_KEY_TYPES,
-					ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_PROPERTY,
-					TypeError);
+		{
+			var propertyName = "keyType";
 
-				return function(keyType) {
-					if (keyType === privateKeyType)
+			definePropertyHere(propertyName, {
+				get: function() {
+					return privateKeyType;
+				},
+				set: (function() {
+					var error = errorMaker(
+						propertyName,
+						ALLOWABLE_KEY_TYPES,
+						ERROR_MAKER_OPT_ALTERNATIVES | ERROR_MAKER_OPT_PROPERTY,
+						TypeError);
+
+					return function(keyType) {
+						if (keyType === privateKeyType && keyType !== null)
+							return;
+
+						if (ALLOWABLE_KEY_TYPES.includes(keyType))
+							privateKeyType = keyType;
+						else
+
+							throw error;
+					};
+				})()
+			});
+
+			if (options && typeof options[propertyName] !== UNDEFINED_TYPE)
+				setDefinedProperty(propertyName, options[propertyName]);
+		}
+
+		{
+			var _propertyName = "size";
+
+			definePropertyHere(_propertyName, {
+				get: function() {
+					return cache.length / 2;
+				},
+				set: function(size) {
+					if (size >= getDefinedProperty(_propertyName))
 						return;
 
-					if (ALLOWABLE_KEY_TYPES.includes(keyType))
-						privateKeyType = keyType;
-					else
+					var capacityStr = "capacity",
+						setCapacity = function(capacity) {
+							setDefinedProperty(capacityStr, capacity);
+						},
+						oldCapacity = getDefinedProperty(capacityStr);
 
-						throw error;
-				};
-			})()
-		});
+					setCapacity(size);
+					setCapacity(oldCapacity);
+				}
+			});
 
-		if (options && typeof options.keyType !== UNDEFINED_TYPE)
-			setDefinedProperty("keyType", options.keyType);
-
-		definePropertyHere("size", {
-			get: function() {
-				return cache.length / 2;
-			},
-			set: function(size) {
-				if (size >= getDefinedProperty("size"))
-					return;
-
-				var capacityStr = "capacity",
-					setCapacity = function(capacity) {
-						setDefinedProperty(capacityStr, capacity);
-					},
-					oldCapacity = getDefinedProperty(capacityStr);
-
-				setCapacity(size);
-				setCapacity(oldCapacity);
-			}
-		});
+		}
 
 		var privateCapacity = 0;
 
-		definePropertyHere("capacity", {
-			get: function() {
-				return privateCapacity;
-			},
-			set: (function() {
-				var capacityErrorMaker = function(predicative, bitmaskOptions, constructor) {
-					return errorMaker(
-						"capacity",
-						predicative,
-						ERROR_MAKER_OPT_PROPERTY | bitmaskOptions,
-						constructor);
+		{
+			var _propertyName2 = "capacity";
 
-				};
+			definePropertyHere(_propertyName2, {
+				get: function() {
+					return privateCapacity;
+				},
+				set: (function() {
+					var capacityErrorMaker = function(predicative, bitmaskOptions, constructor) {
+						return errorMaker(
+							_propertyName2,
+							predicative,
+							ERROR_MAKER_OPT_PROPERTY | bitmaskOptions,
+							constructor);
 
-				return function(capacity) {
-					if (capacity === privateCapacity) {
-						return;
-					} else if (typeof capacity !== NUMBER_TYPE || isNaN(capacity)) {
-						throw capacityErrorMaker("a number (excluding NaN)", NO_OPT, TypeError);
-					} else if (capacity < 0) {
-						throw capacityErrorMaker("negative", ERROR_MAKER_OPT_NEGATED, RangeError);
-					} else if (capacity < privateCapacity) {
-						var difference = M.min(privateCapacity, _this.size) - capacity;
+					};
 
-						for (var i = 0; i < difference; ++i) {
-							var index = getDefinedProperty("_oldestIndex");
-							_this.unset(cache[index - 1]);
+					return function(capacity) {
+						if (capacity === privateCapacity) {
+							return;
+						} else if (typeof capacity !== NUMBER_TYPE || isNaN(capacity)) {
+							throw capacityErrorMaker("a number (excluding NaN)", NO_OPT, TypeError);
+						} else if (capacity < 0) {
+							throw capacityErrorMaker("negative", ERROR_MAKER_OPT_NEGATED, RangeError);
+						} else if (capacity < privateCapacity) {
+							var difference = M.min(privateCapacity, _this.size) - capacity;
+
+							for (var i = 0; i < difference; ++i) {
+								var index = getDefinedProperty("_oldestIndex");
+								_this.unset(cache[index - 1]);
+							}
 						}
-					}
 
-					privateCapacity = M.min(M.round(capacity), MAX_CAPACITY);
-				};
-			})()
-		});
+						privateCapacity = M.min(M.round(capacity), MAX_CAPACITY);
+					};
+				})()
+			});
 
-		setDefinedProperty(
-			"capacity",
-			options && typeof options.capacity !== UNDEFINED_TYPE
-			? options.capacity
-			: MAX_CAPACITY);
+			setDefinedProperty(
+				_propertyName2,
+				options && typeof options[_propertyName2] !== UNDEFINED_TYPE
+				? options[_propertyName2]
+				: MAX_CAPACITY);
+
+		}
 
 		var privateMaxAge = global.Infinity;
 
-		definePropertyHere("maxAge", {
-			get: function() {
-				return privateMaxAge;
-			},
-			set: (function() {
-				var maxAgeErrorMaker = function(predicative, bitmaskOptions, constructor) {
-					return errorMaker(
-						"maxAge",
-						predicative,
-						ERROR_MAKER_OPT_PROPERTY | bitmaskOptions,
-						constructor);
+		{
+			var _propertyName3 = "maxAge";
 
-				};
+			definePropertyHere(_propertyName3, {
+				get: function() {
+					return privateMaxAge;
+				},
+				set: (function() {
+					var maxAgeErrorMaker = function(predicative, bitmaskOptions, constructor) {
+						return errorMaker(
+							_propertyName3,
+							predicative,
+							ERROR_MAKER_OPT_PROPERTY | bitmaskOptions,
+							constructor);
 
-				return function(maxAge) {
-					if (maxAge === privateMaxAge) {
-						return;
-					} else if (typeof maxAge !== NUMBER_TYPE || isNaN(maxAge)) {
-						throw maxAgeErrorMaker("a number of milliseconds", NO_OPT, TypeError);
-					} else if (maxAge < 0) {
-						throw maxAgeErrorMaker("negative", ERROR_MAKER_OPT_NEGATED, RangeError);
-					}
+					};
 
-					privateMaxAge = maxAge;
-				};
-			})()
-		});
+					return function(maxAge) {
+						if (maxAge === privateMaxAge) {
+							return;
+						} else if (typeof maxAge !== NUMBER_TYPE || isNaN(maxAge)) {
+							throw maxAgeErrorMaker("a number of milliseconds", NO_OPT, TypeError);
+						} else if (maxAge < 0) {
+							throw maxAgeErrorMaker("negative", ERROR_MAKER_OPT_NEGATED, RangeError);
+						}
 
-		if (options && typeof options.maxAge !== UNDEFINED_TYPE)
-			setDefinedProperty("maxAge", options.maxAge);
+						privateMaxAge = maxAge;
+					};
+				})()
+			});
+
+			if (options && typeof options[_propertyName3] !== UNDEFINED_TYPE)
+				setDefinedProperty(_propertyName3, options.maxAge);
+		}
 
 		definePropertyHere("_oldestIndex", {
 			get: function() {
