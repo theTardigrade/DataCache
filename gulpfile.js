@@ -27,31 +27,36 @@ gulp.task("script", () => {
                     "constructor"
                 ].map((s) => path.join(__dirname, "src", s + ".js"));
 
-    let getSrc = (name) => {
-			return gulp.src(SRC_PATHS)
-				.pipe(plugins.concat(name + ".js"))
-				.pipe(plugins.wrap({
-					src: path.join(__dirname, "src", "IIFE.tmpl.js")
-				}))
-				.pipe(plugins.babel({
-					plugins: [
-							"arrow-functions",
-							"block-scoping",
-							"parameters",
-							"template-literals"
-						].map((s) => ["transform", "es2015", s].join("-")),
-					retainLines: true
-			}));
+	const DEST_PATH = path.join(__dirname, "build");
+
+    let getSrc = (name, transpile) => {
+			let stream = gulp.src(SRC_PATHS)
+					.pipe(plugins.concat(name + ".js"))
+					.pipe(plugins.wrap({
+						src: path.join(__dirname, "src", "IIFE.tmpl.js")
+					}));
+
+			return (!transpile)
+				? stream
+				: stream.pipe(plugins.babel({
+						plugins: [
+								"arrow-functions",
+								"block-scoping",
+								"parameters",
+								"template-literals"
+							].map((s) => ["transform", "es2015", s].join("-")),
+						retainLines: true
+					}));
 		};
 
 	// minified
-	getSrc("DataCache.min")
+	getSrc("DataCache.min", true)
 		.pipe(plugins.uglify())
 		.pipe(plugins["optimize-js"]())
-        .pipe(gulp.dest(path.join(__dirname, "build")));
+        .pipe(gulp.dest(DEST_PATH));
 
 	// non-minified, but commentless
-	getSrc("DataCache")
+	getSrc("DataCache", true)
 		.pipe(plugins["strip-comments"]())
 		.pipe(plugins["replace"](/\n{3,}/g, "\n\n"))
 		.pipe(plugins.beautify({
@@ -61,7 +66,7 @@ gulp.task("script", () => {
 			wrap_line_length: 96
 		}))
 		.pipe(plugins["optimize-js"]())
-		.pipe(gulp.dest(path.join(__dirname, "build")));
+		.pipe(gulp.dest(DEST_PATH));
 
 });
 

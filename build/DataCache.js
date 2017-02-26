@@ -238,6 +238,11 @@
 
 				value = cache[index];
 
+				if (getCurrentTimestamp() - value.metadata.updated > privateMaxAge) {
+					this.unset(key);
+					return null;
+				}
+
 				if (options) {
 					for (var _i = 0, setOnlyOptionCount = 0, _l = onlyOptionNames.length; _i < _l; ++_i) {
 						if (options[onlyOptionNames[_i]]) {
@@ -334,29 +339,36 @@
 		};
 
 		this.iterate = function(callback, options) {
-			for (var i = 0, l = cache.length, key; i < l; i += 2) {
+			for (var i = 0, l = cache.length, key, value; i < l; i += 2) {
 				key = cache[i];
+				value = this.get(key, options);
 
-				callback(key, this.get(key, options));
+				if (value !== null)
+					callback(key, value);
 			}
 		};
 
 		this.map = function(callback, options) {
 			var returnsFullObject = !options || !options.dataOnly;
 
-			for (var i = 0, l = cache.length, key, newValue; i < l; i += 2) {
+			for (var i = 0, l = cache.length, key, value, newValue; i < l; i += 2) {
 				key = cache[i];
-				newValue = callback(key, this.get(key, options));
+				value = this.get(key, options);
 
-				this.set(key, returnsFullObject ? newValue.data : newValue);
+				if (value !== null) {
+					newValue = callback(key, value);
+
+					this.set(key, returnsFullObject ? newValue.data : newValue);
+				}
 			}
 		};
 
 		this.filter = function(callback, options) {
-			for (var i = 0, l = cache.length, key, swap1, swap2, tmp; i < l;) {
+			for (var i = 0, l = cache.length, key, value, swap1, swap2, tmp; i < l;) {
 				key = cache[i];
+				value = this.get(key, options);
 
-				if (!callback(key, this.get(key, options))) {
+				if (value !== null && !callback(key, this.get(key, options))) {
 					for (var j = 0; j < 2; ++j) {
 						swap1 = i + j;
 						swap2 = l - 2 + j;
@@ -513,6 +525,39 @@
 			? options.capacity
 			: MAX_CAPACITY);
 
+		var privateMaxAge = global.Infinity;
+
+		definePropertyHere("maxAge", {
+			get: function() {
+				return privateMaxAge;
+			},
+			set: (function() {
+				var maxAgeErrorMaker = function(predicative, bitmaskOptions, constructor) {
+					return errorMaker(
+						"maxAge",
+						predicative,
+						ERROR_MAKER_OPT_PROPERTY | bitmaskOptions,
+						constructor);
+
+				};
+
+				return function(maxAge) {
+					if (maxAge === privateMaxAge) {
+						return;
+					} else if (typeof maxAge !== NUMBER_TYPE || isNaN(maxAge)) {
+						throw maxAgeErrorMaker("a number of milliseconds", NO_OPT, TypeError);
+					} else if (maxAge < 0) {
+						throw maxAgeErrorMaker("negative", ERROR_MAKER_OPT_NEGATED, RangeError);
+					}
+
+					privateMaxAge = maxAge;
+				};
+			})()
+		});
+
+		if (options && typeof options.maxAge !== UNDEFINED_TYPE)
+			setDefinedProperty("maxAge", options.maxAge);
+
 		definePropertyHere("_oldestIndex", {
 			get: function() {
 				var index = 1,
@@ -577,12 +622,16 @@
 		assignObject(DataCache.prototype, prototype);
 	}
 
-	if (typeof module === OBJECT_TYPE && typeof module.exports === OBJECT_TYPE) {
-		module.exports = DataCache;
-	} else if (typeof define === FUNCTION_TYPE && define.amd) {
-		define(["DataCache"], [], DataCache);
-	} else {
-		global.DataCache = DataCache;
+	{
+		var constructorName = "DataCache";
+
+		if (typeof module === OBJECT_TYPE && typeof module.exports === OBJECT_TYPE) {
+			module.exports = DataCache;
+		} else if (typeof define === FUNCTION_TYPE && define.amd) {
+			define([constructorName], [], DataCache);
+		} else {
+			global[constructorName] = DataCache;
+		}
 	}
 
 })(

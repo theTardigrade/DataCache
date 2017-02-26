@@ -32,6 +32,11 @@ function DataCache(options) {
 
 			value = cache[index];
 
+			if (getCurrentTimestamp() - value.metadata.updated > privateMaxAge) {
+				this.unset(key);
+				return null;
+			}
+
 			if (options) {
 				for (let i = 0, setOnlyOptionCount = 0, l = onlyOptionNames.length; i < l; ++i) {
 					if (options[onlyOptionNames[i]]) {
@@ -132,29 +137,36 @@ function DataCache(options) {
 	};
 
 	this.iterate = function(callback, options) {
-		for (let i = 0, l = cache.length, key; i < l; i += 2) {
+		for (let i = 0, l = cache.length, key, value; i < l; i += 2) {
 			key = cache[i];
+			value = this.get(key, options);
 
-			callback(key, this.get(key, options));
+			if (value !== null)
+				callback(key, value);
 		}
 	};
 
 	this.map = function(callback, options) {
 		let returnsFullObject = (!options || !options.dataOnly);
 
-		for (let i = 0, l = cache.length, key, newValue; i < l; i += 2) {
+		for (let i = 0, l = cache.length, key, value, newValue; i < l; i += 2) {
 			key = cache[i];
-			newValue = callback(key, this.get(key, options));
+			value = this.get(key, options);
 
-			this.set(key, ((returnsFullObject) ? newValue.data : newValue));
+			if (value !== null) {
+				newValue = callback(key, value);
+
+				this.set(key, ((returnsFullObject) ? newValue.data : newValue));
+			}
 		}
 	};
 
 	this.filter = function(callback, options) {
-		for (let i = 0, l = cache.length, key, swap1, swap2, tmp; i < l; /* empty */) {
+		for (let i = 0, l = cache.length, key, value, swap1, swap2, tmp; i < l; /* empty */) {
 			key = cache[i];
+			value = this.get(key, options);
 
-			if (!callback(key, this.get(key, options))) {
+			if (value !== null && !callback(key, this.get(key, options))) {
 				// move filtered indices to the end of array to be subsequently popped
 				for (let j = 0; j < 2; ++j) {
 					swap1 = i + j;
@@ -316,6 +328,39 @@ function DataCache(options) {
 			: MAX_CAPACITY
 	);
 
+
+	let privateMaxAge = global.Infinity;
+
+	definePropertyHere("maxAge", {
+		get: (() => privateMaxAge),
+		set: (() => {
+			let maxAgeErrorMaker = (predicative, bitmaskOptions, constructor) => {
+					return errorMaker(
+						"maxAge",
+						predicative,
+						ERROR_MAKER_OPT_PROPERTY | bitmaskOptions,
+						constructor
+					);
+				};
+
+			return(maxAge) => {
+				if (maxAge === privateMaxAge) {
+					return;
+				} else if (typeof maxAge !== NUMBER_TYPE || isNaN(maxAge)) {
+					throw maxAgeErrorMaker("a number of milliseconds", NO_OPT, TypeError);
+				} else if (maxAge < 0) {
+					throw maxAgeErrorMaker("negative", ERROR_MAKER_OPT_NEGATED, RangeError);
+				}
+
+				privateMaxAge = maxAge;
+			};
+		})()
+    });
+
+	if (options && typeof options.maxAge !== UNDEFINED_TYPE)
+		setDefinedProperty("maxAge", options.maxAge);
+
+
 	/* private getters and setters */
 
 	definePropertyHere("_oldestIndex", {
@@ -336,7 +381,6 @@ function DataCache(options) {
 }
 
 
-// block-scope, if supported
 {
 	// the following method, on both the constructor and its prototype, can be used
 	// to determine whether to use new-style getters and setters if it returns true
@@ -383,14 +427,18 @@ function DataCache(options) {
 }
 
 
-if (typeof module === OBJECT_TYPE && typeof module.exports === OBJECT_TYPE) {
-	// CommonJS / Node.js
-	module.exports = DataCache;
-} else if (typeof define === FUNCTION_TYPE && define.amd) {
-	// AMD
-	define([ "DataCache" ], [], DataCache);
-} else {
-	// all other environments
-	global.DataCache = DataCache;
+{
+	let constructorName = "DataCache";
+
+	if (typeof module === OBJECT_TYPE && typeof module.exports === OBJECT_TYPE) {
+		// CommonJS / Node.js
+		module.exports = DataCache;
+	} else if (typeof define === FUNCTION_TYPE && define.amd) {
+		// AMD
+		define([ constructorName ], [], DataCache);
+	} else {
+		// all other environments
+		global[constructorName] = DataCache;
+	}
 }
 
