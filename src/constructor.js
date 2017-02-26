@@ -82,7 +82,7 @@ function DataCache(options) {
 				data: data
 			},
 			metadata = object.metadata = {
-				updated: (EXISTS.now) ? D.now() : (new D()).getTime()
+				updated: getCurrentTimestamp()
 			},
 			cachedMetadata = (cache[index] && cache[index].metadata && typeof cache[index].metadata.created === NUMBER_TYPE)
 				? cache[index].metadata

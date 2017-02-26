@@ -70,6 +70,8 @@
 		ERROR_MAKER_OPT_ONE_MAX = 8,
 		ERROR_MAKER_OPT_CONTAIN = 16;
 
+	var GET_CURRENT_TIMESTAMP_OPT_SECONDS = 1;
+
 	var search = function(cacheArray, key) {
 		var lowerBound = 0,
 			upperBound = cacheArray.length - 1;
@@ -111,9 +113,6 @@
 	};
 
 	var deepFreeze = function(object) {
-		if (!EXISTS.freeze)
-			return false;
-
 		for (var key in object) {
 			if (typeof object === OBJECT_TYPE)
 				deepFreeze(object[key]);
@@ -201,6 +200,19 @@
 		};
 	})();
 
+	var getCurrentTimestamp = (function() {
+		var nativeKey = "now",
+			nativeKeyExists = EXISTS[nativeKey];
+
+		return function(bitmaskOptions) {
+			var timestamp = (nativeKeyExists ? D[nativeKey] : new D().getTime)();
+
+			return bitmaskOptions & GET_CURRENT_TIMESTAMP_OPT_SECONDS
+				? M.round(timestamp / 1e3)
+				: timestamp;
+		};
+	})();
+
 	function DataCache(options) {
 		var _this = this;
 		var cache = this._debugCache = [];
@@ -274,7 +286,7 @@
 				},
 
 				metadata = object.metadata = {
-					updated: EXISTS.now ? D.now() : new D().getTime()
+					updated: getCurrentTimestamp()
 				},
 
 				cachedMetadata = cache[index] && cache[index].metadata && typeof cache[index].metadata.created

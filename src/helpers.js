@@ -46,9 +46,6 @@ let sort = (cacheArray) => {
 // recursively freeze an object, to make it and all of its subobjects
 // immutable (i.e. read-only)
 let deepFreeze = (object) => {
-		if (!EXISTS.freeze)
-			return false;
-
 		for (let key in object)
 			if (typeof object === OBJECT_TYPE)
 				deepFreeze(object[key]);
@@ -135,3 +132,15 @@ let assignObject = (() => {
 		};
 	})();
 
+let getCurrentTimestamp = (() => {
+		let nativeKey = "now",
+			nativeKeyExists = EXISTS[nativeKey];
+
+		return (bitmaskOptions) => {
+			let timestamp = ((nativeKeyExists) ? D[nativeKey] : new D().getTime)();
+
+			return (bitmaskOptions & GET_CURRENT_TIMESTAMP_OPT_SECONDS)
+				? M.round(timestamp / 1e3)
+				: timestamp;
+		};
+	})();
