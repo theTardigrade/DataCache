@@ -60,7 +60,9 @@
 	var MAX_ARRAY_LENGTH = (1 << 16) * (1 << 16) - 1,
 		MAX_CAPACITY = M.floor(MAX_ARRAY_LENGTH / 2);
 
-	var AUTOMATIC_GARBAGE_COLLECTION_DEFAULT_TIMEOUT = 1 << 14;
+	var AUTOMATIC_GARBAGE_COLLECTION_DEFAULT_INTERVAL = 1.5e4,
+		AUTOMATIC_GARBAGE_COLLECTION_MIN_INTERVAL = 5e2,
+		AUTOMATIC_GARBAGE_COLLECTION_MAX_INTERVAL = 1e3 * 60 * 60;
 
 	var HELPER_NO_OPTION = 0;
 
@@ -69,9 +71,10 @@
 	var HELPER_ERROR_MAKER_OPTION_PROPERTY = 1,
 		HELPER_ERROR_MAKER_OPTION_NEGATED = 2,
 		HELPER_ERROR_MAKER_OPTION_ALTERNATIVES = 4,
-		HELPER_ERROR_MAKER_OPTION_ONE_MAX = 8,
-		HELPER_ERROR_MAKER_OPTION_CONTAIN = 16,
-		HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE = 32;
+		HELPER_ERROR_MAKER_OPTION_MORE_THAN = 8,
+		HELPER_ERROR_MAKER_OPTION_LESS_THAN = 16,
+		HELPER_ERROR_MAKER_OPTION_CONTAIN = 32,
+		HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE = 64;
 
 	var HELPER_GET_CURRENT_TIMESTAMP_OPTION_SECONDS = 1;
 
@@ -161,7 +164,12 @@
 				: thing)
 			+ " " + (bitmaskOptions & HELPER_ERROR_MAKER_OPTION_NEGATED ? "cannot" : "must")
 			+ " " + (bitmaskOptions & HELPER_ERROR_MAKER_OPTION_CONTAIN ? "contain" : "be")
-			+ " " + (bitmaskOptions & HELPER_ERROR_MAKER_OPTION_ONE_MAX ? "more than " : "") + (
+			+ " " + (bitmaskOptions & HELPER_ERROR_MAKER_OPTION_MORE_THAN ? "more" : "") + (
+				bitmaskOptions & HELPER_ERROR_MAKER_OPTION_LESS_THAN ? "less" : "") + (
+				bitmaskOptions & HELPER_ERROR_MAKER_OPTION_MORE_THAN || bitmaskOptions &
+				HELPER_ERROR_MAKER_OPTION_LESS_THAN
+				? " than "
+				: "") + (
 				bitmaskOptions & HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE ? "a " : "") + (
 				bitmaskOptions & HELPER_ERROR_MAKER_OPTION_ALTERNATIVES
 				? "one of the following: "
@@ -173,6 +181,17 @@
 			&& ConstructorFunc.name.slice(-5) === "Error";
 
 		return new(isConstructorValid ? ConstructorFunc : Error)(msg);
+	};
+
+	var helper_getPropertyErrorMaker = function(propertyName) {
+		return function(predicative, bitmaskOptions, ConstructorFunc) {
+			return helper_errorMaker(
+				propertyName,
+				predicative,
+				HELPER_ERROR_MAKER_OPTION_PROPERTY | bitmaskOptions,
+				ConstructorFunc);
+
+		};
 	};
 
 	var helper_assignObject = (function() {
@@ -255,7 +274,7 @@
 								throw helper_errorMaker(
 									"Options",
 									onlyOptionNames,
-									HELPER_ERROR_MAKER_OPTION_ONE_MAX | HELPER_ERROR_MAKER_OPTION_NEGATED
+									HELPER_ERROR_MAKER_OPTION_MORE_THAN | HELPER_ERROR_MAKER_OPTION_NEGATED
 									| HELPER_ERROR_MAKER_OPTION_ALTERNATIVES | HELPER_ERROR_MAKER_OPTION_CONTAIN);
 
 							value = value[onlyPropertyNames[_i]];
@@ -350,9 +369,17 @@
 			if (privateMaxAge === global.Infinity)
 				return;
 
-			for (var i = 1, l = privateCache.length; i < l; i += 2) {
-				if (helper_getCurrentTimestamp() - privateCache[i].metadata.updated > privateMaxAge)
-					this.unset(privateCache[i - 1]);
+			var garbage = [];
+
+			for (var i = 0, l = privateCache.length, value; i < l; i += 2) {
+				value = privateCache[i + 1];
+
+				if (helper_getCurrentTimestamp() - value.metadata.updated > privateMaxAge)
+					garbage.push(i);
+			}
+
+			for (var _i2 = 0, _l2 = garbage.length; _i2 < _l2; ++_i2) {
+				this.unset(privateCache[garbage[_i2]]);
 			}
 		};
 
@@ -361,7 +388,7 @@
 				key = privateCache[i];
 				value = this.get(key, options);
 
-				if (value !== null)
+				if (value != null)
 					callback(key, value);
 			}
 		};
@@ -373,7 +400,7 @@
 				key = privateCache[i];
 				value = this.get(key, options);
 
-				if (value !== null) {
+				if (value != null) {
 					newValue = callback(key, value);
 
 					this.set(key, returnsFullObject ? newValue.data : newValue);
@@ -386,7 +413,7 @@
 				key = privateCache[i];
 				value = this.get(key, options);
 
-				if (value !== null && !callback(key, this.get(key, options))) {
+				if (value != null && !callback(key, this.get(key, options))) {
 					for (var j = 0; j < 2; ++j) {
 						swap1 = i + j;
 						swap2 = l - 2 + j;
@@ -462,10 +489,9 @@
 					return privateKeyType;
 				},
 				set: (function() {
-					var error = helper_errorMaker(
-						propertyName,
+					var unallowableKeyTypeError = helper_getPropertyErrorMaker(propertyName)(
 						ALLOWABLE_KEY_TYPES,
-						HELPER_ERROR_MAKER_OPTION_ALTERNATIVES | HELPER_ERROR_MAKER_OPTION_PROPERTY,
+						HELPER_ERROR_MAKER_OPTION_ALTERNATIVES,
 						TypeError);
 
 					return function(keyType) {
@@ -473,7 +499,7 @@
 							return;
 
 						if (!ALLOWABLE_KEY_TYPES.includes(keyType))
-							throw error;
+							throw unallowableKeyTypeError;
 
 						_this.clear();
 						privateKeyType = keyType;
@@ -521,21 +547,17 @@
 					return privateCapacity;
 				},
 				set: (function() {
-					var capacityErrorMaker = function(predicative, bitmaskOptions, constructor) {
-						return helper_errorMaker(
-							_propertyName2,
-							predicative,
-							HELPER_ERROR_MAKER_OPTION_PROPERTY | bitmaskOptions,
-							constructor);
-
-					};
+					var capacityErrorMaker = helper_getPropertyErrorMaker(_propertyName2);
 
 					return function(capacity) {
 						if (capacity === privateCapacity) {
 							return;
 						} else if (typeof capacity !== NUMBER_TYPE || isNaN(capacity)) {
-							throw capacityErrorMaker(NUMBER_TYPE + " (excluding NaN)",
-								HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE, TypeError);
+							throw capacityErrorMaker(
+								NUMBER_TYPE + " (excluding NaN)",
+								HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE,
+								TypeError);
+
 						} else if (capacity < 0) {
 							throw capacityErrorMaker("negative", HELPER_ERROR_MAKER_OPTION_NEGATED, RangeError);
 						} else if (capacity < privateCapacity) {
@@ -570,14 +592,7 @@
 					return privateMaxAge;
 				},
 				set: (function() {
-					var maxAgeErrorMaker = function(predicative, bitmaskOptions, constructor) {
-						return helper_errorMaker(
-							_propertyName3,
-							predicative,
-							HELPER_ERROR_MAKER_OPTION_PROPERTY | bitmaskOptions,
-							constructor);
-
-					};
+					var maxAgeErrorMaker = helper_getPropertyErrorMaker(_propertyName3);
 
 					return function(maxAge) {
 						if (maxAge === privateMaxAge) {
@@ -599,6 +614,7 @@
 		}
 
 		var privateAutomaticGarbageCollection = false,
+			privateAutomaticGarbageCollectionInterval = AUTOMATIC_GARBAGE_COLLECTION_DEFAULT_INTERVAL,
 			privateAutomaticGarbageCollectionTimeoutId = 0,
 			privateAutomaticGarbageCollectionTimeoutHandler = function() {
 				stopAutomaticGarbageCollection();
@@ -611,7 +627,7 @@
 			startAutomaticGarbageCollection = function() {
 				privateAutomaticGarbageCollectionTimeoutId = global.setTimeout(
 					privateAutomaticGarbageCollectionTimeoutHandler,
-					AUTOMATIC_GARBAGE_COLLECTION_DEFAULT_TIMEOUT);
+					privateAutomaticGarbageCollectionInterval);
 
 			},
 			stopAutomaticGarbageCollection = function() {
@@ -620,9 +636,10 @@
 			};
 
 		{
-			var _propertyName4 = "automaticGarbageCollection";
+			var mainPropertyName = "automaticGarbageCollection",
+				intervalPropertyName = mainPropertyName + "Interval";
 
-			definePropertyHere(_propertyName4, {
+			definePropertyHere(mainPropertyName, {
 				get: function() {
 					return privateAutomaticGarbageCollection;
 				},
@@ -633,8 +650,43 @@
 				}
 			});
 
-			if (options && typeof options[_propertyName4] !== UNDEFINED_TYPE)
-				setDefinedProperty(_propertyName4, options[_propertyName4]);
+			if (options && typeof options[mainPropertyName] !== UNDEFINED_TYPE)
+				setDefinedProperty(mainPropertyName, options[mainPropertyName]);
+
+			definePropertyHere(intervalPropertyName, {
+				get: function() {
+					return privateAutomaticGarbageCollectionInterval;
+				},
+				set: (function() {
+					var intervalErrorMaker = helper_getPropertyErrorMaker(intervalPropertyName);
+
+					return function(interval) {
+						if (privateAutomaticGarbageCollectionInterval === interval) {
+							return;
+						} else if (typeof interval !== NUMBER_TYPE || isNaN(interval)) {
+							throw intervalErrorMaker(NUMBER_TYPE, HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE,
+								TypeError);
+						} else if (interval < AUTOMATIC_GARBAGE_COLLECTION_MIN_INTERVAL) {
+							throw intervalErrorMaker(
+								AUTOMATIC_GARBAGE_COLLECTION_MIN_INTERVAL,
+								HELPER_ERROR_MAKER_OPTION_NEGATED | HELPER_ERROR_MAKER_OPTION_LESS_THAN,
+								RangeError);
+
+						} else if (interval > AUTOMATIC_GARBAGE_COLLECTION_MAX_INTERVAL) {
+							throw intervalErrorMaker(
+								AUTOMATIC_GARBAGE_COLLECTION_MAX_INTERVAL,
+								HELPER_ERROR_MAKER_OPTION_NEGATED | HELPER_ERROR_MAKER_OPTION_MORE_THAN,
+								RangeError);
+
+						}
+
+						privateAutomaticGarbageCollectionInterval = interval;
+					};
+				})()
+			});
+
+			if (options && typeof options[intervalPropertyName] !== UNDEFINED_TYPE)
+				setDefinedProperty(intervalPropertyName, options[intervalPropertyName]);
 		}
 
 		definePropertyHere("_oldestIndex", {

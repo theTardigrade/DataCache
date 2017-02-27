@@ -92,7 +92,11 @@ let helper_errorMaker = (thing, predicative, bitmaskOptions, ConstructorFunc) =>
 		let msg = ((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_PROPERTY) ? "Property [" + thing + "]" : thing)
 				+ " " + ((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_NEGATED) ? "cannot" : "must")
 				+ " " + ((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_CONTAIN) ? "contain" : "be")
-				+ " " + ((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_ONE_MAX) ? "more than " : "")
+				+ " " + ((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_MORE_THAN) ? "more" : "")
+				+ ((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_LESS_THAN) ? "less" : "")
+				+ ((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_MORE_THAN || bitmaskOptions & HELPER_ERROR_MAKER_OPTION_LESS_THAN)
+					? " than "
+					: "")
 				+ ((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE) ? "a " : "")
 				+ ((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_ALTERNATIVES)
 					? "one of the following: "
@@ -104,6 +108,19 @@ let helper_errorMaker = (thing, predicative, bitmaskOptions, ConstructorFunc) =>
 				&& ConstructorFunc.name.slice(-5) === "Error");
 
 		return new ((isConstructorValid) ? ConstructorFunc : Error)(msg);
+	};
+
+// curry function in order to produce an erroMaker function
+// that is pre-prepared for use with a specific property
+let helper_getPropertyErrorMaker = (propertyName) => {
+		return (predicative, bitmaskOptions, ConstructorFunc) => {
+			return helper_errorMaker(
+				propertyName,
+				predicative,
+				HELPER_ERROR_MAKER_OPTION_PROPERTY | bitmaskOptions,
+				ConstructorFunc
+			);
+		};
 	};
 
 // polyfill of Object.assign
@@ -137,6 +154,7 @@ let helper_assignObject = (() => {
 		};
 	})();
 
+// polyfill of Date.now
 let helper_getCurrentTimestamp = (() => {
 		let nativeKey = "now",
 			nativeKeyExists = EXISTS[nativeKey];
