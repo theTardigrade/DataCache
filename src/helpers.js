@@ -102,6 +102,7 @@ let helper_errorMaker = (thing, predicative, bitmaskOptions, ConstructorFunc) =>
 					? "one of the following: "
 						+ helper_arrayToHumanString(predicative, HELPER_ARRAY_TO_HUMAN_STRING_OPTION_ALTERNATIVES)
 					: predicative)
+				+ ((bitmaskOptions & HELPER_ERROR_MAKER_OPTION_UNIT_MILLISECONDS) ? " of milliseconds" : "")
 				+ ".",
 			isConstructorValid = (typeof ConstructorFunc === FUNCTION_TYPE
 				&& typeof ConstructorFunc.name === STRING_TYPE

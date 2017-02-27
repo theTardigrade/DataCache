@@ -1,5 +1,5 @@
 
-((global, module, define, Error, TypeError, RangeError, D, M, O, A, N) => {
+((global, module, define, Error, TypeError, RangeError, isNaN, D, M, O, A, N) => {
 
 	"use strict";
 
@@ -16,6 +16,7 @@
 	Error,
 	TypeError,
 	RangeError,
+	isNaN,
 	Date,
 	Math,
 	Object,

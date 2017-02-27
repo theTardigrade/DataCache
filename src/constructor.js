@@ -379,8 +379,11 @@ function DataCache(options) {
 					if (maxAge === privateMaxAge) {
 						return;
 					} else if (typeof maxAge !== NUMBER_TYPE || isNaN(maxAge)) {
-						throw maxAgeErrorMaker(NUMBER_TYPE + " of milliseconds",
-							HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE, TypeError);
+						throw maxAgeErrorMaker(
+							NUMBER_TYPE,
+							HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE | HELPER_ERROR_MAKER_OPTION_UNIT_MILLISECONDS,
+							TypeError
+						);
 					} else if (maxAge < 0) {
 						throw maxAgeErrorMaker("negative", HELPER_ERROR_MAKER_OPTION_NEGATED, RangeError);
 					}
@@ -442,7 +445,11 @@ function DataCache(options) {
 					if (privateAutomaticGarbageCollectionInterval === interval) {
 						return;
 					} else if (typeof interval !== NUMBER_TYPE || isNaN(interval)) {
-						throw intervalErrorMaker(NUMBER_TYPE, HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE, TypeError)
+						throw intervalErrorMaker(
+							NUMBER_TYPE,
+							HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE | HELPER_ERROR_MAKER_OPTION_UNIT_MILLISECONDS,
+							TypeError
+						);
 					} else if (interval < AUTOMATIC_GARBAGE_COLLECTION_MIN_INTERVAL) {
 						throw intervalErrorMaker(
 							AUTOMATIC_GARBAGE_COLLECTION_MIN_INTERVAL,

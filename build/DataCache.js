@@ -1,4 +1,4 @@
-(function(global, module, define, Error, TypeError, RangeError, D, M, O, A, N) {
+(function(global, module, define, Error, TypeError, RangeError, isNaN, D, M, O, A, N) {
 
 	"use strict";
 
@@ -74,7 +74,8 @@
 		HELPER_ERROR_MAKER_OPTION_MORE_THAN = 8,
 		HELPER_ERROR_MAKER_OPTION_LESS_THAN = 16,
 		HELPER_ERROR_MAKER_OPTION_CONTAIN = 32,
-		HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE = 64;
+		HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE = 64,
+		HELPER_ERROR_MAKER_OPTION_UNIT_MILLISECONDS = 128;
 
 	var HELPER_GET_CURRENT_TIMESTAMP_OPTION_SECONDS = 1;
 
@@ -174,7 +175,8 @@
 				bitmaskOptions & HELPER_ERROR_MAKER_OPTION_ALTERNATIVES
 				? "one of the following: "
 				+ helper_arrayToHumanString(predicative, HELPER_ARRAY_TO_HUMAN_STRING_OPTION_ALTERNATIVES)
-				: predicative)
+				: predicative) + (
+				bitmaskOptions & HELPER_ERROR_MAKER_OPTION_UNIT_MILLISECONDS ? " of milliseconds" : "")
 			+ ".",
 			isConstructorValid = typeof ConstructorFunc === FUNCTION_TYPE
 			&& typeof ConstructorFunc.name === STRING_TYPE
@@ -598,8 +600,12 @@
 						if (maxAge === privateMaxAge) {
 							return;
 						} else if (typeof maxAge !== NUMBER_TYPE || isNaN(maxAge)) {
-							throw maxAgeErrorMaker(NUMBER_TYPE + " of milliseconds",
-								HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE, TypeError);
+							throw maxAgeErrorMaker(
+								NUMBER_TYPE,
+								HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE |
+								HELPER_ERROR_MAKER_OPTION_UNIT_MILLISECONDS,
+								TypeError);
+
 						} else if (maxAge < 0) {
 							throw maxAgeErrorMaker("negative", HELPER_ERROR_MAKER_OPTION_NEGATED, RangeError);
 						}
@@ -664,8 +670,12 @@
 						if (privateAutomaticGarbageCollectionInterval === interval) {
 							return;
 						} else if (typeof interval !== NUMBER_TYPE || isNaN(interval)) {
-							throw intervalErrorMaker(NUMBER_TYPE, HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE,
+							throw intervalErrorMaker(
+								NUMBER_TYPE,
+								HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE |
+								HELPER_ERROR_MAKER_OPTION_UNIT_MILLISECONDS,
 								TypeError);
+
 						} else if (interval < AUTOMATIC_GARBAGE_COLLECTION_MIN_INTERVAL) {
 							throw intervalErrorMaker(
 								AUTOMATIC_GARBAGE_COLLECTION_MIN_INTERVAL,
@@ -776,6 +786,7 @@
 	Error,
 	TypeError,
 	RangeError,
+	isNaN,
 	Date,
 	Math,
 	Object,
