@@ -89,7 +89,7 @@ function DataCache(options) {
 		// when capacity is reached, start writing over oldest data
 		// use double value to account for consecutive key-value pairs
 		if (index >= private_capacity * 2)
-			index = private_getDefinedProperty("_oldestIndex");
+			index = private_getOldestIndex();
 
 		let object = {
 				data: data
@@ -155,11 +155,12 @@ function DataCache(options) {
 			value = private_cache[i + 1];
 
 			if (now - value.metadata.updated > private_maxAge)
-				garbage.push(i);
+				garbage.push(private_cache[i]);
 		}
 
-		for (let i = 0, l = garbage.length; i < l; ++i)
-			this.unset(private_cache[garbage[i]]);
+		for (let i = 0, l = garbage.length; i < l; ++i) {
+			this.unset(garbage[i]);
+		}
 	};
 
 	this.iterate = function(callback, options) {
@@ -348,7 +349,7 @@ function DataCache(options) {
 						let difference = M.min(private_capacity, private_getDefinedProperty("size")) - capacity;
 
 						for (let i = 0; i < difference; ++i) {
-							let index = private_getDefinedProperty("_oldestIndex");
+							let index = private_getOldestIndex();
 							this.unset(private_cache[index - 1]);
 						}
 					}
@@ -475,23 +476,21 @@ function DataCache(options) {
 			private_setDefinedProperty(intervalPropertyName, options[intervalPropertyName]);
 	}
 
-	/* private getters and setters */
+	/* private methods */
 
-	private_definePropertyHere("_oldestIndex", {
-		get: () => {
-			let index = 1,
-				updated = N.MAX_VALUE || global.Infinity;
+	let private_getOldestIndex = () => {
+		let index = 1,
+			updated = N.MAX_VALUE || global.Infinity;
 
-			for (let i = index, l = private_cache.length; i < l; i += 2) {
-				if (private_cache[i].metadata.updated < updated) {
-					updated = private_cache[i].metadata.updated;
-					index = i;
-				}
+		for (let i = index, l = private_cache.length; i < l; i += 2) {
+			if (private_cache[i].metadata.updated < updated) {
+				updated = private_cache[i].metadata.updated;
+				index = i;
 			}
-
-			return index;
 		}
-	});
+
+		return index;
+	};
 }
 
 

@@ -314,7 +314,7 @@
 				index = private_cache.length + 1;
 
 			if (index >= private_capacity * 2)
-				index = private_getDefinedProperty("_oldestIndex");
+				index = private_getOldestIndex();
 
 			var object = {
 					data: data
@@ -377,11 +377,11 @@
 				value = private_cache[i + 1];
 
 				if (now - value.metadata.updated > private_maxAge)
-					garbage.push(i);
+					garbage.push(private_cache[i]);
 			}
 
 			for (var _i2 = 0, _l2 = garbage.length; _i2 < _l2; ++_i2) {
-				this.unset(private_cache[garbage[_i2]]);
+				this.unset(garbage[_i2]);
 			}
 		};
 
@@ -567,7 +567,7 @@
 								capacity;
 
 							for (var i = 0; i < difference; ++i) {
-								var index = private_getDefinedProperty("_oldestIndex");
+								var index = private_getOldestIndex();
 								_this.unset(private_cache[index - 1]);
 							}
 						}
@@ -700,22 +700,19 @@
 				private_setDefinedProperty(intervalPropertyName, options[intervalPropertyName]);
 		}
 
-		private_definePropertyHere("_oldestIndex", {
-			get: function() {
-				var index = 1,
-					updated = N.MAX_VALUE || global.Infinity;
+		var private_getOldestIndex = function() {
+			var index = 1,
+				updated = N.MAX_VALUE || global.Infinity;
 
-				for (var i = index, l = private_cache.length; i < l; i += 2) {
-					if (private_cache[i].metadata.updated < updated) {
-						updated = private_cache[i].metadata.updated;
-						index = i;
-					}
+			for (var i = index, l = private_cache.length; i < l; i += 2) {
+				if (private_cache[i].metadata.updated < updated) {
+					updated = private_cache[i].metadata.updated;
+					index = i;
 				}
-
-				return index;
 			}
-		});
 
+			return index;
+		};
 	}
 
 	{
