@@ -77,8 +77,6 @@
 		HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE = 64,
 		HELPER_ERROR_MAKER_OPTION_UNIT_MILLISECONDS = 128;
 
-	var HELPER_GET_CURRENT_TIMESTAMP_OPTION_SECONDS = 1;
-
 	var helper_search = function(cacheArray, key) {
 		var lowerBound = 0,
 			upperBound = cacheArray.length - 1;
@@ -230,12 +228,13 @@
 	})();
 
 	var helper_getCurrentTimestamp = (function() {
-		var nativeKey = "now",
-			nativeKeyExists = EXISTS[nativeKey];
+		var nativeKey = "now";
 
-		return function(bitmaskOptions) {
-			var timestamp = (nativeKeyExists ? D[nativeKey] : new D().getTime)();
-			return timestamp;
+		if (EXISTS[nativeKey])
+			return D[nativeKey];
+
+		return function() {
+			return new D().getTime();
 		};
 	})();
 

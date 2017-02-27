@@ -157,16 +157,12 @@ let helper_assignObject = (() => {
 
 // polyfill of Date.now
 let helper_getCurrentTimestamp = (() => {
-		let nativeKey = "now",
-			nativeKeyExists = EXISTS[nativeKey];
+		let nativeKey = "now";
 
-		return (bitmaskOptions) => {
-			let timestamp = ((nativeKeyExists) ? D[nativeKey] : new D().getTime)();
-			return timestamp;
-/*
-			return (bitmaskOptions & HELPER_GET_CURRENT_TIMESTAMP_OPTION_SECONDS)
-				? M.round(timestamp / 1e3)
-				: timestamp;
-*/
+		if (EXISTS[nativeKey])
+			return D[nativeKey];
+
+		return () => {
+			return new D().getTime();
 		};
 	})();
