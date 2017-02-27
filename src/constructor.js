@@ -8,7 +8,7 @@
 */
 
 function DataCache(options) {
-	let privateCache = [];
+	let private_cache = [];
 
 	/* public functions */
 
@@ -22,17 +22,17 @@ function DataCache(options) {
 		return function(key, options) {
 			let value = null;
 
-			if (typeof key !== privateKeyType)
+			if (typeof key !== private_keyType)
 				return value;
 
-			let index = helper_search(privateCache, key);
+			let index = helper_search(private_cache, key);
 
 			if (index === -1)
 				return value;
 
-			value = privateCache[index];
+			value = private_cache[index];
 
-			if (helper_getCurrentTimestamp() - value.metadata.updated > privateMaxAge) {
+			if (helper_getCurrentTimestamp() - value.metadata.updated > private_maxAge) {
 				this.unset(key);
 				return null;
 			}
@@ -58,17 +58,17 @@ function DataCache(options) {
 	})();
 
 	this.has = function(key) {
-		return (typeof key === privateKeyType && helper_search(privateCache, key) > -1);
+		return (typeof key === private_keyType && helper_search(private_cache, key) > -1);
 	};
 
 	this.set = function(key, data) {
-		if (typeof privateKeyType !== STRING_TYPE)
-			setDefinedProperty("keyType", (typeof key));
+		if (typeof private_keyType !== STRING_TYPE)
+			private_setDefinedProperty("keyType", (typeof key));
 
-		if (typeof key !== privateKeyType)
+		if (typeof key !== private_keyType)
 			throw helper_errorMaker(
 				"Key",
-				privateKeyType,
+				private_keyType,
 				HELPER_ERROR_MAKER_OPTION_INDEFINITE_ARTICLE,
 				TypeError
 			);
@@ -81,15 +81,15 @@ function DataCache(options) {
 				TypeError
 			);
 
-		let index = helper_search(privateCache, key);
+		let index = helper_search(private_cache, key);
 
 		if (index === -1)
-			index = privateCache.length + 1;
+			index = private_cache.length + 1;
 
 		// when capacity is reached, start writing over oldest data
 		// use double value to account for consecutive key-value pairs
-		if (index >= privateCapacity * 2)
-			index = getDefinedProperty("_oldestIndex");
+		if (index >= private_capacity * 2)
+			index = private_getDefinedProperty("_oldestIndex");
 
 		let object = {
 				data: data
@@ -98,9 +98,10 @@ function DataCache(options) {
 				updated: helper_getCurrentTimestamp()
 			};
 
-		metadata.created = (privateCache[index] && privateCache[index].metadata && typeof privateCache[index].metadata.created === NUMBER_TYPE)
-			? privateCache[index].metadata.created
-			: metadata.updated;
+		metadata.created = (private_cache[index] && private_cache[index].metadata
+			&& typeof private_cache[index].metadata.created === NUMBER_TYPE)
+				? private_cache[index].metadata.created
+				: metadata.updated;
 
 		// use ECMAScript 5 freeze function to make objects immutable,
 		// therefore stored data and metadata can only be changed by
@@ -108,21 +109,21 @@ function DataCache(options) {
 		if (EXISTS.freeze)
 			helper_deepFreeze(object);
 
-		privateCache[index - 1] = key;
-		privateCache[index] = object;
+		private_cache[index - 1] = key;
+		private_cache[index] = object;
 
-		helper_sort(privateCache);
+		helper_sort(private_cache);
 		return object;
 	};
 
 	this.unset = function(key) {
 		let value = null;
 
-		if (typeof key !== privateKeyType)
+		if (typeof key !== private_keyType)
 			return value;
 
-		let index = helper_search(privateCache, key),
-			length = privateCache.length;
+		let index = helper_search(private_cache, key),
+			length = private_cache.length;
 
 		if (index === -1)
 			return value;
@@ -130,39 +131,40 @@ function DataCache(options) {
 		if (length > 2) {
 			// swap current indices with final two indices in order to pop
 			for (let i = 1, tmp; i >= 0; --i) {
-				tmp = privateCache[index - i];
-				privateCache[index - i] = privateCache[length - i - 1];
-				privateCache[length - i - 1] = tmp;
+				tmp = private_cache[index - i];
+				private_cache[index - i] = private_cache[length - i - 1];
+				private_cache[length - i - 1] = tmp;
 			}
 		}
 
-		value = privateCache.pop();
-		privateCache.pop();
+		value = private_cache.pop();
+		private_cache.pop();
 
-		helper_sort(privateCache);
+		helper_sort(private_cache);
 		return value;
 	};
 
 	this.collectGarbage = function() {
-		if (privateMaxAge === global.Infinity)
+		if (private_maxAge === global.Infinity)
 			return;
 
-		let garbage = [];
+		let garbage = [],
+			now = helper_getCurrentTimestamp();
 
-		for (let i = 0, l = privateCache.length, value; i < l; i += 2) {
-			value = privateCache[i + 1];
+		for (let i = 0, l = private_cache.length, value; i < l; i += 2) {
+			value = private_cache[i + 1];
 
-			if (helper_getCurrentTimestamp() - value.metadata.updated > privateMaxAge)
+			if (now - value.metadata.updated > private_maxAge)
 				garbage.push(i);
 		}
 
 		for (let i = 0, l = garbage.length; i < l; ++i)
-			this.unset(privateCache[garbage[i]]);
+			this.unset(private_cache[garbage[i]]);
 	};
 
 	this.iterate = function(callback, options) {
-		for (let i = 0, l = privateCache.length, key, value; i < l; i += 2) {
-			key = privateCache[i];
+		for (let i = 0, l = private_cache.length, key, value; i < l; i += 2) {
+			key = private_cache[i];
 			value = this.get(key, options);
 
 			if (value != null)
@@ -173,8 +175,8 @@ function DataCache(options) {
 	this.map = function(callback, options) {
 		let returnsFullObject = (!options || !options.dataOnly);
 
-		for (let i = 0, l = privateCache.length, key, value, newValue; i < l; i += 2) {
-			key = privateCache[i];
+		for (let i = 0, l = private_cache.length, key, value, newValue; i < l; i += 2) {
+			key = private_cache[i];
 			value = this.get(key, options);
 
 			if (value != null) {
@@ -186,8 +188,8 @@ function DataCache(options) {
 	};
 
 	this.filter = function(callback, options) {
-		for (let i = 0, l = privateCache.length, key, value, swap1, swap2, tmp; i < l; /* empty */) {
-			key = privateCache[i];
+		for (let i = 0, l = private_cache.length, key, value, swap1, swap2, tmp; i < l; /* empty */) {
+			key = private_cache[i];
 			value = this.get(key, options);
 
 			if (value != null && !callback(key, this.get(key, options))) {
@@ -196,13 +198,13 @@ function DataCache(options) {
 					swap1 = i + j;
 					swap2 = l - 2 + j;
 
-					tmp = privateCache[swap1];
-					privateCache[swap1] = privateCache[swap2];
-					privateCache[swap2] = tmp;
+					tmp = private_cache[swap1];
+					private_cache[swap1] = private_cache[swap2];
+					private_cache[swap2] = tmp;
 				}
 
 				// pop the moved indices, by shrinking the length
-				l = (privateCache.length -= 2);
+				l = (private_cache.length -= 2);
 
 				// move swapped indices back to the end of the array, therefore sorted
 				for (let j = i, m = l - 2; j < m; j += 2) {
@@ -210,9 +212,9 @@ function DataCache(options) {
 						swap1 = j + k;
 						swap2 = swap1 + 2;
 
-						tmp = privateCache[swap1];
-						privateCache[swap1] = privateCache[swap2];
-						privateCache[swap2] = tmp;
+						tmp = private_cache[swap1];
+						private_cache[swap1] = private_cache[swap2];
+						private_cache[swap2] = tmp;
 					}
 				}
 
@@ -226,12 +228,12 @@ function DataCache(options) {
 	};
 
 	this.clear = () => {
-		privateCache = [];
+		private_cache = [];
 	};
 
 	/* initialize getters and setters, including fallback for environments without native support */
 
-	let getFallbackDefinedPropertyName = (prefix, prop) => {
+	let private_getFallbackDefinedPropertyName = (prefix, prop) => {
 			let i = 0,
 				u = (prop.charAt(i) === "_")
 					? (++i, "_")
@@ -239,7 +241,7 @@ function DataCache(options) {
 			u += prefix + prop.charAt(i).toUpperCase();
 			return u + prop.slice(i + 1);
 		},
-		definePropertyHere = (prop, options) => {
+		private_definePropertyHere = (prop, options) => {
 			if (EXISTS.defineProperty) {
 				O.defineProperty(this, prop, options);
 			} else {
@@ -248,30 +250,30 @@ function DataCache(options) {
 				for (let i = 0, l = keys.length, k; i < l; ++i) {
 					k = keys[i] + "et";
 					if (typeof options[k] === FUNCTION_TYPE)
-						this[getFallbackDefinedPropertyName(k, prop)] = options[k];
+						this[private_getFallbackDefinedPropertyName(k, prop)] = options[k];
 				}
 			}
 		},
-		getDefinedProperty = (prop) => {
+		private_getDefinedProperty = (prop) => {
 			return (EXISTS.defineProperty)
 				? this[prop]
-				: this[getFallbackDefinedPropertyName("get", prop)]();
+				: this[private_getFallbackDefinedPropertyName("get", prop)]();
 		},
-		setDefinedProperty = (prop, value) => {
+		private_setDefinedProperty = (prop, value) => {
 			return (EXISTS.defineProperty)
 				? (this[prop] = value)
-				: this[getFallbackDefinedPropertyName("set", prop)](value);
+				: this[private_getFallbackDefinedPropertyName("set", prop)](value);
 		};
 
 	/* public getters and setters */
 
-	let privateKeyType = null;
+	let private_keyType = null;
 
 	{
 		let propertyName = "keyType";
 
-		definePropertyHere(propertyName, {
-			get: (() => privateKeyType),
+		private_definePropertyHere(propertyName, {
+			get: (() => private_keyType),
 			set: (() => {
 				let unallowableKeyTypeError = helper_getPropertyErrorMaker(propertyName)(
 						ALLOWABLE_KEY_TYPES,
@@ -280,39 +282,39 @@ function DataCache(options) {
 					);
 
 				return (keyType) => {
-					if (keyType === privateKeyType && keyType !== null)
+					if (keyType === private_keyType && keyType !== null)
 						return;
 
 					if (!ALLOWABLE_KEY_TYPES.includes(keyType))
 						throw unallowableKeyTypeError;
 
 					this.clear();
-					privateKeyType = keyType;
+					private_keyType = keyType;
 				};
 			})()
 		});
 
 		if (options && typeof options[propertyName] !== UNDEFINED_TYPE)
-			setDefinedProperty(propertyName, options[propertyName]);
+			private_setDefinedProperty(propertyName, options[propertyName]);
 	}
 
 
 	{
 		let propertyName = "size";
 
-		definePropertyHere(propertyName, {
+		private_definePropertyHere(propertyName, {
 			get: () => {
 				this.collectGarbage();
 
-				return privateCache.length / 2;
+				return private_cache.length / 2;
 			},
 			set: (size) => {
-				if (size >= getDefinedProperty(propertyName))
+				if (size >= private_getDefinedProperty(propertyName))
 					return;
 
 				let capacityStr = "capacity",
-					setCapacity = (capacity) => { setDefinedProperty(capacityStr, capacity); },
-					oldCapacity = getDefinedProperty(capacityStr)
+					setCapacity = (capacity) => { private_setDefinedProperty(capacityStr, capacity); },
+					oldCapacity = private_getDefinedProperty(capacityStr)
 
 				setCapacity(size);
 				setCapacity(oldCapacity);
@@ -321,18 +323,18 @@ function DataCache(options) {
 	}
 
 
-	let privateCapacity = 0;
+	let private_capacity = 0;
 
 	{
 		let propertyName = "capacity";
 
-		definePropertyHere(propertyName, {
-			get: (() => privateCapacity),
+		private_definePropertyHere(propertyName, {
+			get: (() => private_capacity),
 			set: (() => {
 				let capacityErrorMaker = helper_getPropertyErrorMaker(propertyName);
 
 				return (capacity) => {
-					if (capacity === privateCapacity) {
+					if (capacity === private_capacity) {
 						return;
 					} else if (typeof capacity !== NUMBER_TYPE || isNaN(capacity)) {
 						throw capacityErrorMaker(
@@ -342,21 +344,21 @@ function DataCache(options) {
 						);
 					} else if (capacity < 0) {
 						throw capacityErrorMaker("negative", HELPER_ERROR_MAKER_OPTION_NEGATED, RangeError);
-					} else if (capacity < privateCapacity) {
-						let difference = M.min(privateCapacity, getDefinedProperty("size")) - capacity;
+					} else if (capacity < private_capacity) {
+						let difference = M.min(private_capacity, private_getDefinedProperty("size")) - capacity;
 
 						for (let i = 0; i < difference; ++i) {
-							let index = getDefinedProperty("_oldestIndex");
-							this.unset(privateCache[index - 1]);
+							let index = private_getDefinedProperty("_oldestIndex");
+							this.unset(private_cache[index - 1]);
 						}
 					}
 
-					privateCapacity = M.min(M.round(capacity), MAX_CAPACITY);
+					private_capacity = M.min(M.round(capacity), MAX_CAPACITY);
 				};
 			})()
 		});
 
-		setDefinedProperty(
+		private_setDefinedProperty(
 			propertyName,
 			(options && typeof options[propertyName] !== UNDEFINED_TYPE)
 				? options[propertyName]
@@ -365,18 +367,18 @@ function DataCache(options) {
 	}
 
 
-	let privateMaxAge = global.Infinity;
+	let private_maxAge = global.Infinity;
 
 	{
 		let propertyName = "maxAge";
 
-		definePropertyHere(propertyName, {
-			get: (() => privateMaxAge),
+		private_definePropertyHere(propertyName, {
+			get: (() => private_maxAge),
 			set: (() => {
 				let maxAgeErrorMaker = helper_getPropertyErrorMaker(propertyName);
 
 				return (maxAge) => {
-					if (maxAge === privateMaxAge) {
+					if (maxAge === private_maxAge) {
 						return;
 					} else if (typeof maxAge !== NUMBER_TYPE || isNaN(maxAge)) {
 						throw maxAgeErrorMaker(
@@ -388,61 +390,61 @@ function DataCache(options) {
 						throw maxAgeErrorMaker("negative", HELPER_ERROR_MAKER_OPTION_NEGATED, RangeError);
 					}
 
-					privateMaxAge = maxAge;
+					private_maxAge = maxAge;
 				};
 			})()
 		});
 
 		if (options && typeof options[propertyName] !== UNDEFINED_TYPE)
-			setDefinedProperty(propertyName, options[propertyName]);
+			private_setDefinedProperty(propertyName, options[propertyName]);
 	}
 
 
-	let privateAutomaticGarbageCollection = false,
-		privateAutomaticGarbageCollectionInterval = AUTOMATIC_GARBAGE_COLLECTION_DEFAULT_INTERVAL,
-		privateAutomaticGarbageCollectionTimeoutId = 0,
-		privateAutomaticGarbageCollectionTimeoutHandler = (() => {
-			stopAutomaticGarbageCollection();
+	let private_automaticGarbageCollection = false,
+		private_automaticGarbageCollectionInterval = AUTOMATIC_GARBAGE_COLLECTION_DEFAULT_INTERVAL,
+		private_automaticGarbageCollectionTimeoutId = 0,
+		private_automaticGarbageCollectionTimeoutHandler = (() => {
+			private_stopAutomaticGarbageCollection();
 
-			if (privateAutomaticGarbageCollection) {
+			if (private_automaticGarbageCollection) {
 				this.collectGarbage();
-				startAutomaticGarbageCollection();
+				private_startAutomaticGarbageCollection();
 			}
 		}),
-		startAutomaticGarbageCollection = () => {
-			privateAutomaticGarbageCollectionTimeoutId = global.setTimeout(
-				privateAutomaticGarbageCollectionTimeoutHandler,
-				privateAutomaticGarbageCollectionInterval
+		private_startAutomaticGarbageCollection = () => {
+			private_automaticGarbageCollectionTimeoutId = global.setTimeout(
+				private_automaticGarbageCollectionTimeoutHandler,
+				private_automaticGarbageCollectionInterval
 			);
 		},
-		stopAutomaticGarbageCollection = () => {
-			if (privateAutomaticGarbageCollectionTimeoutId)
-				global.clearTimeout(privateAutomaticGarbageCollectionTimeoutId);
+		private_stopAutomaticGarbageCollection = () => {
+			if (private_automaticGarbageCollectionTimeoutId)
+				global.clearTimeout(private_automaticGarbageCollectionTimeoutId);
 		};
 
 	{
 		let mainPropertyName = "automaticGarbageCollection",
 			intervalPropertyName = mainPropertyName + "Interval";
 
-		definePropertyHere(mainPropertyName, {
-			get: (() => privateAutomaticGarbageCollection),
+		private_definePropertyHere(mainPropertyName, {
+			get: (() => private_automaticGarbageCollection),
 			set: (value) => {
-				((privateAutomaticGarbageCollection = !!value) // intentional assignment in condition
-					? startAutomaticGarbageCollection
-					: stopAutomaticGarbageCollection)();
+				((private_automaticGarbageCollection = !!value) // intentional assignment in condition
+					? private_startAutomaticGarbageCollection
+					: private_stopAutomaticGarbageCollection)();
 			}
 		});
 
 		if (options && typeof options[mainPropertyName] !== UNDEFINED_TYPE)
-			setDefinedProperty(mainPropertyName, options[mainPropertyName]);
+			private_setDefinedProperty(mainPropertyName, options[mainPropertyName]);
 
-		definePropertyHere(intervalPropertyName, {
-			get: (() => privateAutomaticGarbageCollectionInterval),
+		private_definePropertyHere(intervalPropertyName, {
+			get: (() => private_automaticGarbageCollectionInterval),
 			set: (() => {
 				let intervalErrorMaker = helper_getPropertyErrorMaker(intervalPropertyName);
 
 				return (interval) => {
-					if (privateAutomaticGarbageCollectionInterval === interval) {
+					if (private_automaticGarbageCollectionInterval === interval) {
 						return;
 					} else if (typeof interval !== NUMBER_TYPE || isNaN(interval)) {
 						throw intervalErrorMaker(
@@ -464,25 +466,25 @@ function DataCache(options) {
 						);
 					}
 
-					privateAutomaticGarbageCollectionInterval = interval;
+					private_automaticGarbageCollectionInterval = interval;
 				};
 			})()
 		});
 
 		if (options && typeof options[intervalPropertyName] !== UNDEFINED_TYPE)
-			setDefinedProperty(intervalPropertyName, options[intervalPropertyName]);
+			private_setDefinedProperty(intervalPropertyName, options[intervalPropertyName]);
 	}
 
 	/* private getters and setters */
 
-	definePropertyHere("_oldestIndex", {
+	private_definePropertyHere("_oldestIndex", {
 		get: () => {
 			let index = 1,
 				updated = N.MAX_VALUE || global.Infinity;
 
-			for (let i = index, l = privateCache.length; i < l; i += 2) {
-				if (privateCache[i].metadata.updated < updated) {
-					updated = privateCache[i].metadata.updated;
+			for (let i = index, l = private_cache.length; i < l; i += 2) {
+				if (private_cache[i].metadata.updated < updated) {
+					updated = private_cache[i].metadata.updated;
 					index = i;
 				}
 			}
