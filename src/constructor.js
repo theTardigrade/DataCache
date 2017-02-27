@@ -151,7 +151,7 @@ function DataCache(options) {
 		let garbage = [],
 			now = helper_getCurrentTimestamp();
 
-		for (let i = 0, l = private_cache.length, value; i < l; i += 2) {
+		for (let i = 0, l = M.min(private_cache.length, GARBAGE_COLLECTION_MAX_ITEMS), value; i < l; i += 2) {
 			value = private_cache[i + 1];
 
 			if (now - value.metadata.updated > private_maxAge)

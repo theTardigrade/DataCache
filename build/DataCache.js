@@ -60,6 +60,8 @@
 	var MAX_ARRAY_LENGTH = (1 << 16) * (1 << 16) - 1,
 		MAX_CAPACITY = M.floor(MAX_ARRAY_LENGTH / 2);
 
+	var GARBAGE_COLLECTION_MAX_ITEMS = (1 << 11) * (5 / 4);
+
 	var AUTOMATIC_GARBAGE_COLLECTION_DEFAULT_INTERVAL = 1.5e4,
 		AUTOMATIC_GARBAGE_COLLECTION_MIN_INTERVAL = 5e2,
 		AUTOMATIC_GARBAGE_COLLECTION_MAX_INTERVAL = 1e3 * 60 * 60;
@@ -373,7 +375,8 @@
 			var garbage = [],
 				now = helper_getCurrentTimestamp();
 
-			for (var i = 0, l = private_cache.length, value; i < l; i += 2) {
+			for (var i = 0, l = M.min(private_cache.length, GARBAGE_COLLECTION_MAX_ITEMS), value; i <
+				l; i += 2) {
 				value = private_cache[i + 1];
 
 				if (now - value.metadata.updated > private_maxAge)

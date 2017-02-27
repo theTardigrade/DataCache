@@ -54,6 +54,9 @@ if (!EXISTS.includes) {
 const MAX_ARRAY_LENGTH = ((1 << 16) * (1 << 16)) - 1,
 	MAX_CAPACITY = M.floor(MAX_ARRAY_LENGTH / 2);
 
+// the most amount of items that will ever be cleaned in a single GC sweep
+const GARBAGE_COLLECTION_MAX_ITEMS = (1 << 11) * (5 / 4); // 2560
+
 // default amount of milliseconds between each round of automatic garbage collection,
 // if set to run
 const AUTOMATIC_GARBAGE_COLLECTION_DEFAULT_INTERVAL = 1.5e4, // 15 seconds
