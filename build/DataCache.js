@@ -203,10 +203,6 @@
 			return O[nativeKey];
 
 		return function(target) {
-			for (var _len = arguments.length, sources = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key
-				< _len; _key++) {
-				sources[_key - 1] = arguments[_key];
-			}
 			if (target == null)
 				throw helper_errorMaker(
 					"Target object", [UNDEFINED_TYPE, NULL_NAME],
@@ -215,11 +211,11 @@
 
 			var t = O(target);
 
-			for (var i = 0, l = sources.length, s; i < l; ++i) {
-				if ((s = sources[i]) == null)
+			for (var i = 1, l = arguments.length, source; i < l; ++i) {
+				if ((source = arguments[i]) == null)
 					continue;
 
-				for (var key in s) {
+				for (var key in source) {
 					if (O.prototype.hasOwnProperty.call(s, key))
 						t[key] = s[key];
 				}

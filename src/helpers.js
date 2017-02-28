@@ -131,7 +131,7 @@ let helper_assignObject = (() => {
 		if (EXISTS[nativeKey])
 			return O[nativeKey];
 
-		return (target, ...sources) => {
+		return function(target) {
 			if (target == null)
 				throw helper_errorMaker(
 					"Target object",
@@ -142,11 +142,11 @@ let helper_assignObject = (() => {
 
 			let t = O(target);
 
-			for (let i = 0, l = sources.length, s; i < l; ++i) {
-				if ((s = sources[i]) == null)
+			for (let i = 1, l = arguments.length, source; i < l; ++i) {
+				if ((source = arguments[i]) == null)
 					continue;
 
-				for (let key in s)
+				for (let key in source)
 					if (O.prototype.hasOwnProperty.call(s, key))
 						t[key] = s[key];
 			}
