@@ -373,18 +373,25 @@
 				return;
 
 			var garbage = [],
-				now = helper_getCurrentTimestamp();
+				now = helper_getCurrentTimestamp(),
+				length = private_cache.length,
+				l = M.min(length, GARBAGE_COLLECTION_MAX_ITEMS * 2),
+				i = 0;
 
-			for (var i = 0, l = M.min(private_cache.length, GARBAGE_COLLECTION_MAX_ITEMS), value; i <
-				l; i += 2) {
+			if (length !== l) {
+				i = M.floor(M.random() * ((length - l) / 2)) * 2;
+				l += i;
+			}
+
+			for (var value; i < l; i += 2) {
 				value = private_cache[i + 1];
 
 				if (now - value.metadata.updated > private_maxAge)
 					garbage.push(private_cache[i]);
 			}
 
-			for (var _i2 = 0, _l2 = garbage.length; _i2 < _l2; ++_i2) {
-				this.unset(garbage[_i2]);
+			for (i = 0, l = garbage.length; i < l; ++i) {
+				this.unset(garbage[i]);
 			}
 		};
 
@@ -521,8 +528,6 @@
 
 			private_definePropertyHere(_propertyName, {
 				get: function() {
-					_this.collectGarbage();
-
 					return private_cache.length / 2;
 				},
 				set: function(size) {
@@ -625,19 +630,28 @@
 
 		var private_automaticGarbageCollection = false,
 			private_automaticGarbageCollectionInterval = AUTOMATIC_GARBAGE_COLLECTION_DEFAULT_INTERVAL,
+			private_automaticGarbageCollectionLastTimestamp = global.NaN,
 			private_automaticGarbageCollectionTimeoutId = 0,
 			private_automaticGarbageCollectionTimeoutHandler = function() {
 				private_stopAutomaticGarbageCollection();
 
 				if (private_automaticGarbageCollection) {
 					_this.collectGarbage();
+					private_automaticGarbageCollectionLastTimestamp = helper_getCurrentTimestamp();
 					private_startAutomaticGarbageCollection();
 				}
 			},
 			private_startAutomaticGarbageCollection = function() {
+				var timeDelta = !isNaN(private_automaticGarbageCollectionLastTimestamp)
+					? helper_getCurrentTimestamp() - private_automaticGarbageCollectionLastTimestamp
+					: 0,
+					timeout = timeDelta < private_automaticGarbageCollectionInterval
+					? private_automaticGarbageCollectionInterval - timeDelta
+					: private_automaticGarbageCollectionInterval;
+
 				private_automaticGarbageCollectionTimeoutId = global.setTimeout(
 					private_automaticGarbageCollectionTimeoutHandler,
-					private_automaticGarbageCollectionInterval);
+					timeout);
 
 			},
 			private_stopAutomaticGarbageCollection = function() {
@@ -694,7 +708,9 @@
 
 						}
 
+						private_stopAutomaticGarbageCollection();
 						private_automaticGarbageCollectionInterval = interval;
+						private_startAutomaticGarbageCollection();
 					};
 				})()
 			});
