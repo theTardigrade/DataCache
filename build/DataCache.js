@@ -244,7 +244,7 @@
 		var _this = this;
 		var private_cache = [];
 
-		this.get = (function() {
+		var get = this.get = (function() {
 			var onlyPropertyNames = ["data", "metadata"],
 				onlyOptionNames = new A(onlyPropertyNames.length);
 
@@ -266,7 +266,7 @@
 				value = private_cache[index];
 
 				if (helper_getCurrentTimestamp() - value.metadata.updated > private_maxAge) {
-					this.unset(key);
+					unset(key);
 					return null;
 				}
 
@@ -293,7 +293,7 @@
 			return typeof key === private_keyType && helper_search(private_cache, key) > -1;
 		};
 
-		this.set = function(key, data) {
+		var set = this.set = function(key, data) {
 			if (typeof private_keyType !== STRING_TYPE)
 				private_setDefinedProperty("keyType", typeof key);
 
@@ -341,7 +341,7 @@
 			return object;
 		};
 
-		this.unset = function(key) {
+		var unset = this.unset = function(key) {
 			var value = null;
 
 			if (typeof key !== private_keyType)
@@ -368,7 +368,7 @@
 			return value;
 		};
 
-		this.collectGarbage = function() {
+		var collectGarbage = this.collectGarbage = function() {
 			if (private_maxAge === global.Infinity)
 				return;
 
@@ -391,14 +391,14 @@
 			}
 
 			for (i = 0, l = garbage.length; i < l; ++i) {
-				this.unset(garbage[i]);
+				unset(garbage[i]);
 			}
 		};
 
 		this.iterate = function(callback, options) {
 			for (var i = 0, l = private_cache.length, key, value; i < l; i += 2) {
 				key = private_cache[i];
-				value = this.get(key, options);
+				value = get(key, options);
 
 				if (value != null)
 					callback(key, value);
@@ -410,12 +410,12 @@
 
 			for (var i = 0, l = private_cache.length, key, value, newValue; i < l; i += 2) {
 				key = private_cache[i];
-				value = this.get(key, options);
+				value = get(key, options);
 
 				if (value != null) {
 					newValue = callback(key, value);
 
-					this.set(key, returnsFullObject ? newValue.data : newValue);
+					set(key, returnsFullObject ? newValue.data : newValue);
 				}
 			}
 		};
@@ -423,9 +423,9 @@
 		this.filter = function(callback, options) {
 			for (var i = 0, l = private_cache.length, key, value, swap1, swap2, tmp; i < l;) {
 				key = private_cache[i];
-				value = this.get(key, options);
+				value = get(key, options);
 
-				if (value != null && !callback(key, this.get(key, options))) {
+				if (value != null && !callback(key, value)) {
 					for (var j = 0; j < 2; ++j) {
 						swap1 = i + j;
 						swap2 = l - 2 + j;
@@ -576,7 +576,7 @@
 
 							for (var i = 0; i < difference; ++i) {
 								var index = private_getOldestIndex();
-								_this.unset(private_cache[index - 1]);
+								unset(private_cache[index - 1]);
 							}
 						}
 
@@ -636,7 +636,7 @@
 				private_stopAutomaticGarbageCollection();
 
 				if (private_automaticGarbageCollection) {
-					_this.collectGarbage();
+					collectGarbage();
 					private_automaticGarbageCollectionLastTimestamp = helper_getCurrentTimestamp();
 					private_startAutomaticGarbageCollection();
 				}
