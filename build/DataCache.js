@@ -455,7 +455,7 @@
 			}
 		};
 
-		this.clear = function() {
+		var clear = this.clear = function() {
 			private_cache = [];
 		};
 
@@ -513,7 +513,7 @@
 						if (!ALLOWABLE_KEY_TYPES.includes(keyType))
 							throw unallowableKeyTypeError;
 
-						_this.clear();
+						clear();
 						private_keyType = keyType;
 					};
 				})()
@@ -645,9 +645,7 @@
 				var timeDelta = !isNaN(private_automaticGarbageCollectionLastTimestamp)
 					? helper_getCurrentTimestamp() - private_automaticGarbageCollectionLastTimestamp
 					: 0,
-					timeout = timeDelta < private_automaticGarbageCollectionInterval
-					? private_automaticGarbageCollectionInterval - timeDelta
-					: private_automaticGarbageCollectionInterval;
+					timeout = M.max(0, private_automaticGarbageCollectionInterval - timeDelta);
 
 				private_automaticGarbageCollectionTimeoutId = global.setTimeout(
 					private_automaticGarbageCollectionTimeoutHandler,

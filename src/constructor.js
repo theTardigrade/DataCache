@@ -238,7 +238,7 @@ function DataCache(options) {
 		}
 	};
 
-	this.clear = () => {
+	let clear = this.clear = () => {
 		private_cache = [];
 	};
 
@@ -299,7 +299,7 @@ function DataCache(options) {
 					if (!ALLOWABLE_KEY_TYPES.includes(keyType))
 						throw unallowableKeyTypeError;
 
-					this.clear();
+					clear();
 					private_keyType = keyType;
 				};
 			})()
@@ -424,9 +424,7 @@ function DataCache(options) {
 			let timeDelta = (!isNaN(private_automaticGarbageCollectionLastTimestamp))
 					? helper_getCurrentTimestamp() - private_automaticGarbageCollectionLastTimestamp
 					: 0,
-				timeout = (timeDelta < private_automaticGarbageCollectionInterval)
-					? private_automaticGarbageCollectionInterval - timeDelta
-					: private_automaticGarbageCollectionInterval;
+				timeout = M.max(0, private_automaticGarbageCollectionInterval - timeDelta);
 
 			private_automaticGarbageCollectionTimeoutId = global.setTimeout(
 				private_automaticGarbageCollectionTimeoutHandler,
